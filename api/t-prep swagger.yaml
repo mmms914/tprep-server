@@ -1,0 +1,796 @@
+openapi: 3.0.3
+info:
+  title: T-Prep
+  version: 0.0.1
+tags:
+  - name: global
+    description: Общие методы
+  
+  - name: card
+    description: Взаимодействие с картой
+    
+  - name: collection
+    description: Взаимодействие с колодой
+    
+  - name: user
+    description: Операции над пользователем
+paths:
+  /global/sendResetCode:
+    get:
+      tags:
+        - global
+      summary: Отправка кода для восстановления пароля
+      operationId: sendResetCode
+      description: Отправленный код используется в "user/resetPassword"
+      parameters:
+        - name: email
+          in: query
+          description: почта пользователя
+          required: true
+          schema:
+            type: string
+            example: "romanov@corp.nstu.ru"
+      responses:
+        '200':
+          description: код отправлен
+        '400':
+          description: НЕВАЛИДНАЯ почта
+        '404':
+          description: почта НЕ зарегистрирована
+  /global/getPublicCollections:
+    get:
+      tags:
+        - global
+      summary: Получение публичных колод
+      operationId: getPublicCollections
+      parameters:
+        - name: count
+          in: query
+          description: количество получаемых колод
+          required: false
+          schema:
+            type: integer
+            example: 5
+            default: 10
+        - name: offset
+          in: query
+          description: смещение для получения публичных колод
+          required: false
+          schema:
+            type: integer
+            example: 10
+            default: 0
+      responses:
+        '200':
+          description: колоды получены; возвращается количество полученных колод
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count: 
+                    type: integer
+                    example: 2
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Collection"
+                    example: [
+                      {
+                        "id": 1,
+                        "name": Math,
+                        "is_public": true,
+                        "cards": [{
+                                    "local_id": 1,
+                                    "question": "1 + 1?",
+                                    "answer": "3"
+                                  }, {
+                                    "local_id": 2,
+                                    "question": "2 - 2",
+                                    "answer": "nice"
+                                  }]
+                      },
+                      {
+                        "id": 2,
+                        "name": aboba_hoooooooo,
+                        "is_public": true,
+                        "cards": []
+                      }
+                      ]
+  /global/calculateClasses:
+    get:
+      tags:
+        - global
+      summary: Получение интервалов для повторений
+      operationId: calculateClasses
+      description: заглушка
+      parameters:
+        - name: n
+          in: query
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        default:
+          description: ok
+  /card:
+    put:
+      tags:
+        - card
+      summary: Обновление карточки в колоде
+      description: Доступно только владельцу колоды
+      operationId: updateCard
+      parameters:
+        - name: api_key
+          in: header
+          description: токен текущей сессии
+          required: true
+          schema:
+            type: string
+        - name: collection_id
+          in: query
+          description: ID колоды, в которой находится карта
+          required: true
+          schema:
+            type: integer
+        - name: card_local_id
+          in: query
+          description: local-ID карты в колоде
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: JSON-объект с полями, которые нужно изменить (из "question", "answer")
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                question:
+                  type: string
+                  example: What is ur name?
+                answer:
+                  type: string
+                  example: Cox-Zucker
+        
+      responses:
+        '200':
+          description: карточка успешно изменена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Card'          
+        '404':
+          description: карты или колоды не существует
+        '403':
+          description: пользователь не является владельцем колоды
+        '401':
+          description: токен недействителен
+      security:
+        - api_key: []
+    post:
+      tags:
+        - card
+      summary: Добавление карточки в колоду
+      description: Доступно только владельцу колоды
+      operationId: addCard
+      parameters:
+        - name: api_key
+          in: header
+          description: токен текущей сессии
+          required: true
+          schema:
+            type: string
+        - name: collection_id
+          in: query
+          description: ID колоды, в которую необходимо добавить карту
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        $ref: "#/components/requestBodies/CardWithoutID"
+      responses:
+        '201':
+          description: карточка добавлена в колоду
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Card'          
+        '400':
+          description: неверный формат данных
+        '403':
+          description: пользователь не является владельцем колоды
+      security:
+        - api_key: []
+    delete:
+      tags:
+        - card
+      summary: Удаление карточки из колоды
+      operationId: deleteCard
+      parameters:
+        - name: api_key
+          in: header
+          description: токен текущей сессии
+          required: true
+          schema:
+            type: string
+        - name: collection_id
+          in: query
+          description: ID колоды, в которой находится карта
+          required: true
+          schema:
+            type: integer
+        - name: card_local_id
+          in: query
+          description: local-ID карты в колоде
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: карта удалена из колоды
+        '404':
+          description: колоды/карты не существует
+        '403':
+          description: пользователь не является владельцем колоды
+      security:
+        - api_key: []
+  /user:
+    post:
+      tags:
+        - user
+      summary: Создание пользователя
+      description: После регистрации пользователя, необходимо совершить логин для получения токена сессии
+      operationId: createUser
+      requestBody:
+        description: Данные нового пользователя
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        201:
+          description: пользователь успешно создан
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    format: int64
+                    example: 10
+                  username:
+                    type: string
+                    example: theUser
+                  email:
+                    type: string
+                    example: john@email.com 
+        400:
+          description: неверный формат данных
+        409:
+          description: пользователь с такими логином/почтой уже существует
+  /user/login:
+    get:
+      tags:
+        - user
+      summary: Авторизация пользователя
+      description: ''
+      operationId: loginUser
+      parameters:
+        - name: username
+          in: query
+          description: Имя пользователя для входа
+          required: true
+          schema:
+            type: string
+        - name: password
+          in: query
+          description: Пароль для входа в чистом виде
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: успешная авторизация; возвращает токен пользователя
+          headers:
+            X-Rate-Limit:
+              description: разрешенное число запросов в час
+              schema:
+                type: integer
+                format: int32
+            X-Expires-After:
+              description: UTC-дата окончания действия токена
+              schema:
+                type: string
+                format: date-time
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "343dsfkj3io4je3q24e1iojd1iwojd1iod%2"
+        '400':
+          description: неверный логин/пароль
+  /user/logout:
+    get:
+      tags:
+        - user
+      summary: Завершение текущей сессии
+      description: Обнуляет токен сессии
+      operationId: logoutUser
+      parameters:
+        - name: api_key
+          in: header
+          description: токен текущей сессии
+          required: true
+          schema:
+            type: string
+      responses:
+        default:
+          description: успешная операция
+      security:
+        - api_key: []
+  /user/{username}:
+    get:
+      tags:
+        - user
+      summary: Получение информации о текущем пользователе
+      description: ''
+      operationId: getUserInfo
+      parameters:
+        - name: username
+          in: path
+          description: имя пользователя
+          required: true
+          schema:
+            type: string
+        - name: api_key
+          in: header
+          description: токен текущей сессии
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: успешная операция
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserInfo"   
+        '403':
+          description: имя пользователя не соответствует токену
+      security:
+        - api_key: []
+    put:
+      tags:
+        - user
+      summary: Обновление данных о пользователе
+      description: Доступно только авторизованным пользователям
+      operationId: updateUser
+      parameters:
+        - name: username
+          in: path
+          description: имя пользователя, данные о котором необходимо обновить
+          required: true
+          schema:
+            type: string
+        - name: api_key
+          in: header
+          description: токен текущей сессии
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: JSON-объект с полями, которые нужно изменить (из "username", "email", "password")
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: theUser
+                email:
+                  type: string
+                  example: john@email.com
+                password:
+                  type: string
+                  example: '12345'
+      responses:
+        '200':
+          description: успешная операция
+        '400':
+          description: недопустимые данные
+        '404':
+          description: пользователь не найден
+      security:
+        - api_key: []
+    delete:
+      tags:
+        - user
+      summary: Удаление пользователя
+      description: Доступно только авторизованным пользователям
+      operationId: deleteUser
+      parameters:
+        - name: username
+          in: path
+          description: имя пользователя, которого необходимо удалить
+          required: true
+          schema:
+            type: string
+        - name: api_key
+          in: header
+          description: токен текущей сессии
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: пользователь удален
+        '400':
+          description: неправильное имя пользователя
+        '404':
+          description: пользователь не найден
+      security:
+        - api_key: []
+  /collection:
+    post:
+      tags:
+        - collection
+      summary: Создание колоды
+      description: Доступно только авторизованному пользователю
+      operationId: createCollection
+      parameters:
+        - name: api_key
+          in: header
+          description: токен текущей сессии
+          required: true
+          schema:
+            type: string
+        - name: name
+          in: query
+          description: название колоды
+          required: true
+          schema:
+            type: string
+        - name: is_public
+          in: query
+          description: является ли колода публичной
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        201:
+          description: колода создана
+          content:
+            application/json:
+              schema:
+                type: object
+                description: в поле "cards" хранятся local-IDs карт колоды
+                properties:
+                  id:
+                    type: integer
+                    format: int64
+                    example: 10
+                  name:
+                    type: string
+                    example: my training
+                  is_public:
+                    type: boolean
+                    example: false
+                  cards:
+                    type: array
+                    items: 
+                      $ref: "#/components/schemas/Card"
+                    example: []
+        403:
+          description: недопустимое название колоды
+        401:
+          description: токен недействителен
+      security:
+        - api_key: []
+  /collection/{id}:
+    get:
+      tags:
+        - collection
+      summary: Получение колоды
+      description: Доступно только создателю (всем, если колода является публичной)
+      operationId: getCollection
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: api_key
+          in: header
+          description: токен текущей сессии, если колода не является публичной
+          required: false
+          schema:
+            type: string
+      responses:
+        200:
+          description: успешная операция
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+        404:
+          description: колоды не существует
+        403:
+          description: колода является приватной, и текущий пользователь не имеет к ней доступа
+    put:
+      tags:
+        - collection
+      summary: Изменение колоды
+      description: Доступно только создателю
+      operationId: updateCollection
+      parameters:
+        - name: id
+          description: ID колоды
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: api_key
+          in: header
+          description: токен текущей сессии
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: '#/components/requestBodies/ChangeCollection'
+      responses:
+        200:
+          description: успешная операция
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+        400:
+          description: недопустимые данные
+        404:
+          description: колоды не существует
+        403:
+          description: пользователь не является владельцем колоды
+      security:
+        - api_key: []
+    delete:
+      tags:
+        - collection
+      summary: Удаление колоды
+      description: Доступно только создателю
+      operationId: deleteCollection
+      parameters:
+        - name: id
+          description: ID колоды
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: api_key
+          in: header
+          description: токен текущей сессии
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: колода удалена
+        404:
+          description: колоды не существует
+        403:
+          description: пользователь не является владельцем колоды
+      security:
+        - api_key: []
+  /user/resetPassword:
+    put:
+      tags:
+        - user
+      summary: Запрос на сброс пароля после получения кода
+      operationId: resetPassword
+      description: Возвращает токен для сброса пароля, используемый в "user/changePassword"
+      parameters:
+        - name: email
+          in: query
+          description: почта пользователя
+          required: true
+          schema:
+            type: string
+            example: "romanov@corp.nstu.ru"
+        - name: code
+          in: query
+          description: код, полученный на почту после "/global/sendResetCode"
+          required: true
+          schema:
+            type: string
+            example: "345231"
+      responses:
+        '200':
+          description: код верный
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "resetToken"
+        '400':
+          description: код НЕверный
+  /user/changePassword:
+    put:
+      tags:
+        - user
+      summary: Смена пароля
+      operationId: changePassword
+      description: Смена пароля с помощью токена, полученного после "user/resetPassword"
+      parameters:
+        - name: email
+          in: query
+          description: почта пользователя
+          required: true
+          schema:
+            type: string
+            example: "romanov@corp.nstu.ru"
+        - name: new_password
+          in: query
+          description: новый пароль
+          required: true
+          schema:
+            type: string
+            example: "345231"
+        - name: reset_token
+          in: query
+          description: токен, полученный после "user/resetPassword"
+          required: true
+          schema:
+            type: string
+            example: "resetToken"
+      responses:
+        '200':
+          description: пароль успешно изменен
+        '400':
+          description: неверный токен / формат данных
+components:
+  schemas:
+    Card:
+      type: object
+      properties:
+        local_id:
+          type: integer
+          format: int64
+          example: 10
+        question:
+          type: string
+          example: What is ur name?
+        answer:
+          type: string
+          example: Cox-Zucker
+    Collection:
+      type: object
+      description: в поле "cards" хранятся объекты карт
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 10
+        name:
+          type: string
+          example: my training
+        is_public:
+          type: boolean
+          example: true
+        cards:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 2
+            items:
+              type: array
+              items: 
+                $ref: "#/components/schemas/Card"
+              example: [
+                {
+                  "local_id": 1,
+                  "question": "What is ur name?",
+                  "answer": "Cox-Zucker"
+                }, {
+                  "local_id": 2,
+                  "question": "whatsup",
+                  "answer": "ok"
+                }
+                ]
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 10
+        username:
+          type: string
+          example: theUser
+        email:
+          type: string
+          example: john@email.com
+        password:
+          type: string
+          example: '12345'
+    UserInfo:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 10
+        username:
+          type: string
+          example: theUser
+        collections:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 2
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/Collection"
+              example: [
+                {
+                  "id": 1,
+                  "name": my training,
+                  "is_public": true,
+                  "cards": [1, 4, 12, 15, 16]
+                },
+                {
+                  "id": 2,
+                  "name": aboba,
+                  "is_public": false,
+                  "cards": []
+                }
+                ]                      
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        type:
+          type: string
+        message:
+          type: string
+          
+  requestBodies:
+    CardWithoutID:
+      content:
+       application/json:
+            schema:
+              type: object
+              properties:
+                question:
+                  type: string
+                  example: What is ur name?
+                answer:
+                  type: string
+                  example: Cox-Zucker
+    ChangeCollection:
+      description: JSON-объект с полями, которые нужно изменить (из "name", "is_public")
+      required: true
+      content:
+       application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: my training
+                is_public:
+                  type: boolean
+                  example: true
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: api_key
+      in: header
