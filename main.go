@@ -15,16 +15,16 @@ import (
 )
 
 type Card struct {
-	LocalID  int    `json:"local_id"`
-	Question string `json:"question"`
-	Answer   string `json:"answer"`
+	LocalID  int    `bson:"local_id" json:"local_id"`
+	Question string `bson:"question" json:"question"`
+	Answer   string `bson:"answer" json:"answer"`
 }
 
 type Collection struct {
-	ID       int    `json:"id"`
-	Name     string `json:"name"`
-	IsPublic bool   `json:"is_public"`
-	Cards    []Card `json:"cards"`
+	ID       int    `bson:"id" json:"answer"`
+	Name     string `bson:"name" json:"name"`
+	IsPublic bool   `bson:"is_public" json:"is_public"`
+	Cards    []Card `bson:"cards" json:"cards"`
 }
 
 var client *mongo.Client
@@ -45,9 +45,10 @@ func getCollection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s, _ := json.Marshal(result)
+	fmt.Println(result.Cards[0].LocalID)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-	w.Write([]byte(s))
+	w.Write(s)
 }
 
 func main() {
