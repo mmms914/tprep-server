@@ -45,7 +45,6 @@ func getCollection(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s, _ := json.Marshal(result)
-	fmt.Println(result.Cards[0].LocalID)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 	w.Write(s)
