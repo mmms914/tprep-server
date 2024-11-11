@@ -21,7 +21,7 @@ type Card struct {
 }
 
 type Collection struct {
-	ID       int    `bson:"id" json:"answer"`
+	ID       int    `bson:"id" json:"id"`
 	Name     string `bson:"name" json:"name"`
 	IsPublic bool   `bson:"is_public" json:"is_public"`
 	Cards    []Card `bson:"cards" json:"cards"`
@@ -62,5 +62,4 @@ func main() {
 	r.Get("/getCollection/{id}", getCollection)
 	fmt.Println("Listening on port 3000")
 	http.ListenAndServe(":3000", r)
-
 }
