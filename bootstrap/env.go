@@ -1,14 +1,16 @@
 package bootstrap
 
 import (
+	"github.com/gookit/slog"
 	"github.com/spf13/viper"
-	"log"
 )
 
 type Env struct {
-	AppEnv        string `mapstructure:"APP_ENV"`
-	ServerAddress string `mapstructure:"SERVER_ADDRESS"`
-	MongoURI      string `mapstructure:"MONGO_URI"`
+	AppEnv   string `mapstructure:"APP_ENV"`
+	Port     int    `mapstructure:"PORT"`
+	MongoURI string `mapstructure:"MONGO_URI"`
+	DBName   string `mapstructure:"DB_NAME"`
+	DBPort   int    `mapstructure:"DB_PORT"`
 }
 
 func NewEnv() *Env {
@@ -16,14 +18,14 @@ func NewEnv() *Env {
 	viper.SetConfigFile(".env")
 	err := viper.ReadInConfig()
 	if err != nil {
-		log.Fatal("Can't find the config file", err)
+		slog.Fatal("Can't find the config file", err)
 	}
 	err = viper.Unmarshal(&env)
 	if err != nil {
-		log.Fatal("Environment can't be loaded", err)
+		slog.Fatal("Environment can't be loaded", err)
 	}
 	if env.AppEnv == "admin" {
-		log.Println("The T-prep is running in admin env")
+		slog.Info("The T-prep is running in admin env")
 	}
 	return &env
 }
