@@ -1,0 +1,28 @@
+services:
+  tprep-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
+    networks:
+      - my_network
+
+  mongo:
+    image: mongo:8.0.3
+    container_name: mongo
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "27017:27017"
+    volumes:
+      - ../mongo:/data/db
+    networks:
+      - my_network
+
+networks:
+  my_network:
