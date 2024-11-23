@@ -5,3 +5,6 @@ type Card struct {
 	Question string `bson:"question" json:"question"`
 	Answer   string `bson:"answer" json:"answer"`
 }
+type GlobalValues struct {
+	MaxCollectionID int `bson:"max_collection_id"`
+}
