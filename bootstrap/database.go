@@ -8,7 +8,13 @@ import (
 )
 
 func NewMongoDatabase(env *Env) *mongo.Client {
-	mongodbURI := env.MongoURI
+	var mongodbURI string
+	if env.AppEnv == "local" {
+		mongodbURI = env.LocalMongoURI
+	} else if env.AppEnv == "docker" {
+		mongodbURI = env.DockerMongoURI
+	}
+
 	client, err := mongo.Connect(options.Client().ApplyURI(mongodbURI))
 	if err != nil {
 		slog.Fatal(err)

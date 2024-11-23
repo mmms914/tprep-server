@@ -29,6 +29,8 @@ func Setup(r *chi.Mux, app bootstrap.Application) {
 
 	r.Use(loggingMiddleware)
 
-	r.Get("/getCollection/{id}", getCollection)
+	initCardRouter(r)
+	initCollectionRouter(r)
+
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("ping")) })
 }

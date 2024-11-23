@@ -1,16 +1,19 @@
 package bootstrap
 
 import (
+	"fmt"
 	"github.com/gookit/slog"
 	"github.com/spf13/viper"
 )
 
 type Env struct {
-	AppEnv   string `mapstructure:"APP_ENV"`
-	Port     int    `mapstructure:"PORT"`
-	MongoURI string `mapstructure:"MONGO_URI"`
-	DBName   string `mapstructure:"DB_NAME"`
-	DBPort   int    `mapstructure:"DB_PORT"`
+	AppEnv         string `mapstructure:"APP_ENV"`
+	Port           int    `mapstructure:"PORT"`
+	LocalMongoURI  string `mapstructure:"LOCAL_MONGO_URI"`
+	DockerMongoURI string `mapstructure:"DOCKER_MONGO_URI"`
+	DBName         string `mapstructure:"DB_NAME"`
+	DBPort         int    `mapstructure:"DB_PORT"`
+	MongoDir       string `mapstructure:"MONGO_DIR"`
 }
 
 func NewEnv() *Env {
@@ -24,8 +27,7 @@ func NewEnv() *Env {
 	if err != nil {
 		slog.Fatal("Environment can't be loaded", err)
 	}
-	if env.AppEnv == "admin" {
-		slog.Info("The T-prep is running in admin env")
-	}
+	slog.Info(fmt.Sprintf("The T-prep is running in %s env", env.AppEnv))
+
 	return &env
 }

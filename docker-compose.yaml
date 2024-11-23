@@ -6,7 +6,7 @@ services:
     restart: unless-stopped
     env_file: .env
     ports:
-      - "3000:3000"
+      - ${PORT}:${PORT}
     depends_on:
       - mongo
     networks:
@@ -18,9 +18,9 @@ services:
     restart: unless-stopped
     env_file: .env
     ports:
-      - "27017:27017"
+      - ${DB_PORT}:${DB_PORT}
     volumes:
-      - ../mongo:/data/db
+      - ${MONGO_DIR}:/data/db
     networks:
       - my_network
 
