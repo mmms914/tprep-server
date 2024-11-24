@@ -8,17 +8,12 @@ import (
 	"github.com/gookit/slog"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"main/database"
 	"main/models"
 	"net/http"
 	"strconv"
 )
-
-var collections, collectionsGlobal *mongo.Collection
-
-type CollectionInfo struct {
-	Id    int `bson:"id"`
-	MaxId int `bson:"max_id"`
-}
 
 func getCollection(w http.ResponseWriter, r *http.Request) {
 	var result models.Collection
@@ -42,22 +37,52 @@ func getCollection(w http.ResponseWriter, r *http.Request) {
 
 func createCollection(w http.ResponseWriter, r *http.Request) {
 	var newCollection models.Collection
-	err := json.NewDecoder(r.Body).Decode(&newCollection)
-	if err != nil || newCollection.Name == "" {
+	var collectionInfo models.CollectionInfo
+	var collectionName string
+
+	collectionName = r.URL.Query().Get("name")
+	if collectionName == "" {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("invalid request payload or collection name"))
+		w.Write([]byte("Invalid name"))
 		return
 	}
-	collections := Client.Database(Env.DBName).Collection("collections")
-	newCollection.ID = globalValues.MaxCollectionID + 1
+
+	collectionTypeS := r.URL.Query().Get("is_public")
+	collectionType, err := strconv.ParseBool(collectionTypeS)
+	if collectionTypeS != "" && err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Invalid is_public"))
+		return
+	}
+
+	newCollection.Name = collectionName
+	if collectionTypeS != "" {
+		newCollection.IsPublic = collectionType
+	}
+	newCollection.Cards = make([]models.Card, 0)
+
+	globalValues = database.GlobalValues()
 	globalValues.MaxCollectionID += 1
-	updateGlobalValues()
+	newCollection.ID = globalValues.MaxCollectionID
+	database.SetGlobalValues(globalValues)
+
 	_, err = collections.InsertOne(context.TODO(), newCollection)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
 	}
+
+	collectionInfo.Id = newCollection.ID
+	collectionInfo.MaxId = 1
+
+	_, err = collectionsGlobal.InsertOne(context.TODO(), collectionInfo)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
 	response, _ := json.Marshal(newCollection)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -65,30 +90,68 @@ func createCollection(w http.ResponseWriter, r *http.Request) {
 }
 
 func editCollection(w http.ResponseWriter, r *http.Request) {
-	var editedCollection, existingCollection models.Collection
-	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
-	err := json.NewDecoder(r.Body).Decode(&editedCollection)
-	if err != nil || editedCollection.Name == "" {
+	var newCollection, existingCollection models.Collection
+	var collectionName string
+
+	id, err := strconv.Atoi(chi.URLParam(r, "id"))
+	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("invalid request payload or collection name"))
+		w.Write([]byte("Invalid id"))
 		return
 	}
-	collections := Client.Database(Env.DBName).Collection("collections")
-	filter := bson.D{{"id", id}}
-	update := bson.D{
-		{"$set", bson.D{
-			{"name", editedCollection.Name},
-			{"is_public", editedCollection.IsPublic},
-		}},
+
+	collectionName = r.URL.Query().Get("name")
+	if r.URL.Query().Has("name") && collectionName == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Invalid name"))
+		return
 	}
-	editedCollection = existingCollection
-	err = collections.FindOneAndUpdate(context.TODO(), filter, update).Decode(&existingCollection)
+
+	collectionTypeS := r.URL.Query().Get("is_public")
+	collectionType, err := strconv.ParseBool(collectionTypeS)
+	if collectionTypeS != "" && err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Invalid is_public"))
+		return
+	}
+
+	if !r.URL.Query().Has("name") && !r.URL.Query().Has("is_public") {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Invalid parameters"))
+		return
+	}
+
+	filter := bson.D{{"id", id}}
+	err = collections.FindOne(context.TODO(), filter).Decode(&existingCollection)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		w.Write([]byte("collection not found"))
 		return
 	}
-	response, _ := json.Marshal(editedCollection)
+
+	if !r.URL.Query().Has("name") {
+		collectionName = existingCollection.Name
+	}
+
+	if !r.URL.Query().Has("is_public") {
+		collectionType = existingCollection.IsPublic
+	}
+
+	update := bson.D{
+		{"$set", bson.D{
+			{"name", collectionName},
+			{"is_public", collectionType},
+		}},
+	}
+
+	err = collections.FindOneAndUpdate(context.TODO(), filter, update, options.FindOneAndUpdate().SetReturnDocument(options.After)).Decode(&newCollection)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write([]byte("collection not found"))
+		return
+	}
+
+	response, _ := json.Marshal(newCollection)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(response)
@@ -96,6 +159,7 @@ func editCollection(w http.ResponseWriter, r *http.Request) {
 
 func deleteCollection(w http.ResponseWriter, r *http.Request) {
 	var result models.Collection
+	var resultInfo models.CollectionInfo
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
 	filter := bson.D{{Key: "id", Value: id}}
 	err := collections.FindOneAndDelete(context.TODO(), filter).Decode(&result)
@@ -104,13 +168,19 @@ func deleteCollection(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("collection not found"))
 		return
 	}
+
+	err = collectionsGlobal.FindOneAndDelete(context.TODO(), filter).Decode(&resultInfo)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("collection successfully deleted"))
 }
 
 func initCollectionRouter(r *chi.Mux) {
-	collections = Client.Database(Env.DBName).Collection("collections")
-	collectionsGlobal = Client.Database(Env.DBName).Collection("collections_global")
 	r.Get("/collection/{id}", getCollection)
 	r.Post("/collection", createCollection)
 	r.Put("/collection/{id}", editCollection)

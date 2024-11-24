@@ -9,6 +9,11 @@ type Collection struct {
 	Cards    []Card `bson:"cards" json:"cards"`
 }
 
+type CollectionInfo struct {
+	Id    int `bson:"id"`
+	MaxId int `bson:"max_id"`
+}
+
 func (c *Collection) AddCard(card Card) {
 	c.Cards = append(c.Cards, card)
 }

@@ -13,7 +13,7 @@ import (
 func addCard(w http.ResponseWriter, r *http.Request) {
 	var card models.Card
 	var collection models.Collection
-	var collectionInfo CollectionInfo
+	var collectionInfo models.CollectionInfo
 
 	collectionId, err := strconv.Atoi(r.URL.Query().Get("collection_id"))
 	if err != nil {
@@ -35,7 +35,12 @@ func addCard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	collectionsGlobal.FindOne(context.TODO(), filter).Decode(&collectionInfo)
+	err = collectionsGlobal.FindOne(context.TODO(), filter).Decode(&collectionInfo)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
 
 	card.LocalID = collectionInfo.MaxId + 1
 

@@ -5,6 +5,7 @@ import (
 	"github.com/gookit/slog"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"main/database"
 )
 
 func NewMongoDatabase(env *Env) *mongo.Client {
@@ -24,6 +25,8 @@ func NewMongoDatabase(env *Env) *mongo.Client {
 	if err != nil {
 		slog.FatalErr(err)
 	}
+
+	database.InitDatabase(client.Database(env.DBName))
 	slog.Println("Successfully connected to MongoDB!")
 	return client
 }
