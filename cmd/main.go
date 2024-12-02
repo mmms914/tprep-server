@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/gookit/slog"
+	"main/api/route"
 	"main/bootstrap"
-	"main/route"
 	"net/http"
 	"os"
 )
