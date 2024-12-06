@@ -14,6 +14,7 @@ type Env struct {
 	DBName         string `mapstructure:"DB_NAME"`
 	DBPort         int    `mapstructure:"DB_PORT"`
 	MongoDir       string `mapstructure:"MONGO_DIR"`
+	ContextTimeout int    `mapstructure:"CONTEXT_TIMEOUT"`
 }
 
 func NewEnv() *Env {

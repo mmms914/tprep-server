@@ -8,6 +8,7 @@ import (
 	"main/bootstrap"
 	"net/http"
 	"os"
+	"time"
 )
 
 func main() {
@@ -16,8 +17,14 @@ func main() {
 	app := bootstrap.App()
 	env := app.Env
 
+	db := app.Mongo.Database(env.DBName)
+	defer app.CloseDBConnection()
+
+	timeout := time.Duration(env.ContextTimeout) * time.Second
+
 	r := chi.NewRouter()
-	route.Setup(r, app)
+
+	route.Setup(env, timeout, db, r)
 
 	slog.Infof("Listening on port %d", env.Port)
 	slog.FatalErr(http.ListenAndServe(fmt.Sprintf(":%d", env.Port), r))

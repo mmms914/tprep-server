@@ -14,18 +14,22 @@ type Database interface {
 
 type Collection interface {
 	FindOne(context.Context, interface{}) SingleResult
-	InsertOne(context.Context, interface{}) (interface{}, error)
+	InsertOne(context.Context, interface{}) (string, error)
 	DeleteOne(context.Context, interface{}) (int64, error)
-	UpdateOne(context.Context, interface{}, interface{}, ...options.Lister[options.UpdateOptions]) (*mongo.UpdateResult, error)
+	UpdateOne(context.Context, interface{}, interface{}, ...options.Lister[options.UpdateOptions]) (UpdateResult, error)
+	ReplaceOne(context.Context, interface{}, interface{}, ...options.Lister[options.ReplaceOptions]) (UpdateResult, error)
 }
 
 type SingleResult interface {
 	Decode(interface{}) error
 }
 
+type UpdateResult interface{}
+
 type Client interface {
 	Database(string) Database
 	Ping(context.Context) error
+	Disconnect(context.Context) error
 }
 
 type mongoClient struct {
@@ -40,6 +44,10 @@ type mongoCollection struct {
 
 type mongoSingleResult struct {
 	sr *mongo.SingleResult
+}
+
+type mongoUpdateResult struct {
+	ur *mongo.UpdateResult
 }
 
 func (mc *mongoClient) Ping(ctx context.Context) error {
@@ -66,13 +74,17 @@ func (mc *mongoCollection) FindOne(ctx context.Context, filter interface{}) Sing
 	return &mongoSingleResult{sr: singleResult}
 }
 
-func (mc *mongoCollection) UpdateOne(ctx context.Context, filter interface{}, update interface{}, opts ...options.Lister[options.UpdateOptions]) (*mongo.UpdateResult, error) {
+func (mc *mongoCollection) UpdateOne(ctx context.Context, filter interface{}, update interface{}, opts ...options.Lister[options.UpdateOptions]) (UpdateResult, error) {
 	return mc.coll.UpdateOne(ctx, filter, update, opts[:]...)
 }
 
-func (mc *mongoCollection) InsertOne(ctx context.Context, document interface{}) (interface{}, error) {
+func (mc *mongoCollection) ReplaceOne(ctx context.Context, filter interface{}, update interface{}, opts ...options.Lister[options.ReplaceOptions]) (UpdateResult, error) {
+	return mc.coll.ReplaceOne(ctx, filter, update, opts[:]...)
+}
+
+func (mc *mongoCollection) InsertOne(ctx context.Context, document interface{}) (string, error) {
 	id, err := mc.coll.InsertOne(ctx, document)
-	return id.InsertedID, err
+	return id.InsertedID.(string), err
 }
 
 func (mc *mongoCollection) DeleteOne(ctx context.Context, filter interface{}) (int64, error) {
@@ -84,8 +96,11 @@ func (sr *mongoSingleResult) Decode(v interface{}) error {
 	return sr.sr.Decode(v)
 }
 
+func (mc *mongoClient) Disconnect(ctx context.Context) error {
+	return mc.cl.Disconnect(ctx)
+}
+
 func NewClient(connection string) (Client, error) {
 	c, err := mongo.Connect(options.Client().ApplyURI(connection))
 	return &mongoClient{cl: c}, err
-
 }

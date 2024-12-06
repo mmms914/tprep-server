@@ -1,10 +1,12 @@
 package bootstrap
 
-import "go.mongodb.org/mongo-driver/v2/mongo"
+import (
+	"main/database"
+)
 
 type Application struct {
 	Env   *Env
-	Mongo *mongo.Client
+	Mongo database.Client
 }
 
 func App() Application {
@@ -12,4 +14,8 @@ func App() Application {
 	app.Env = NewEnv()
 	app.Mongo = NewMongoDatabase(app.Env)
 	return *app
+}
+
+func (app *Application) CloseDBConnection() {
+	CloseMongoDBConnection(app.Mongo)
 }

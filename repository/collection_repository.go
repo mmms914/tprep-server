@@ -20,15 +20,15 @@ func NewCollectionRepository(db database.Database, collection string) domain.Col
 	}
 }
 
-func (cr *collectionRepository) Create(c context.Context, collection *domain.Collection) error {
+func (cr *collectionRepository) Create(c context.Context, collection *domain.Collection) (string, error) {
 	collections := cr.database.Collection(cr.collection)
 	collection.ID = internal.GenerateUUID()
-	_, err := collections.InsertOne(c, collection)
-	return err
+	id, err := collections.InsertOne(c, collection)
+	return id, err
 }
 
 func (cr *collectionRepository) UpdateByID(c context.Context, collectionID string, update interface{}) error {
-	filter := bson.D{{Key: "id", Value: collectionID}}
+	filter := bson.D{{Key: "_id", Value: collectionID}}
 	return cr.Update(c, filter, update)
 }
 
@@ -41,15 +41,15 @@ func (cr *collectionRepository) Update(c context.Context, filter interface{}, up
 
 func (cr *collectionRepository) DeleteByID(c context.Context, collectionID string) error {
 	collections := cr.database.Collection(cr.collection)
-	filter := bson.D{{Key: "id", Value: collectionID}}
+	filter := bson.D{{Key: "_id", Value: collectionID}}
 	_, err := collections.DeleteOne(c, filter)
 	return err
 }
 
-func (cr *collectionRepository) GetByID(c context.Context, collectionID string) (*domain.Collection, error) {
+func (cr *collectionRepository) GetByID(c context.Context, collectionID string) (domain.Collection, error) {
 	var result domain.Collection
 	collections := cr.database.Collection(cr.collection)
-	filter := bson.D{{Key: "id", Value: collectionID}}
+	filter := bson.D{{Key: "_id", Value: collectionID}}
 	err := collections.FindOne(c, filter).Decode(&result)
-	return &result, err
+	return result, err
 }

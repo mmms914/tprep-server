@@ -3,12 +3,15 @@ package bootstrap
 import (
 	"context"
 	"github.com/gookit/slog"
-	"go.mongodb.org/mongo-driver/v2/mongo"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"log"
 	"main/database"
+	"time"
 )
 
-func NewMongoDatabase(env *Env) *mongo.Client {
+func NewMongoDatabase(env *Env) database.Client {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
 	var mongodbURI string
 	if env.AppEnv == "local" {
 		mongodbURI = env.LocalMongoURI
@@ -16,17 +19,29 @@ func NewMongoDatabase(env *Env) *mongo.Client {
 		mongodbURI = env.DockerMongoURI
 	}
 
-	client, err := mongo.Connect(options.Client().ApplyURI(mongodbURI))
+	client, err := database.NewClient(mongodbURI)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = client.Ping(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	slog.Println("Successfully connected to MongoDB!")
+	return client
+}
+
+func CloseMongoDBConnection(client database.Client) {
+	if client == nil {
+		return
+	}
+
+	err := client.Disconnect(context.TODO())
 	if err != nil {
 		slog.Fatal(err)
 	}
 
-	err = client.Ping(context.TODO(), nil)
-	if err != nil {
-		slog.FatalErr(err)
-	}
-
-	database.InitDatabase(client.Database(env.DBName))
-	slog.Println("Successfully connected to MongoDB!")
-	return client
+	slog.Println("Connection to MongoDB closed.")
 }

@@ -19,29 +19,22 @@ func NewCollectionUseCase(collectionRepository domain.CollectionRepository, time
 	}
 }
 
-func (cu *collectionUseCase) Create(c context.Context, collection *domain.Collection) error {
+func (cu *collectionUseCase) Create(c context.Context, collection *domain.Collection) (string, error) {
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
+
+	collection.Cards = make([]domain.Card, 0)
 	return cu.collectionRepository.Create(ctx, collection)
 }
 
-func (cu *collectionUseCase) UpdateNameByID(c context.Context, collectionID string, collectionName string) error {
+func (cu *collectionUseCase) PutByID(c context.Context, collectionID string, collection domain.Collection) error {
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
-	update := bson.D{
-		{"$set", bson.D{
-			{"name", collectionName},
-		}},
-	}
-	return cu.collectionRepository.UpdateByID(ctx, collectionID, update)
-}
 
-func (cu *collectionUseCase) UpdateTypeByID(c context.Context, collectionID string, collectionType bool) error {
-	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
-	defer cancel()
 	update := bson.D{
 		{"$set", bson.D{
-			{"is_public", collectionType},
+			{"name", collection.Name},
+			{"is_public", collection.IsPublic},
 		}},
 	}
 	return cu.collectionRepository.UpdateByID(ctx, collectionID, update)
@@ -53,16 +46,22 @@ func (cu *collectionUseCase) DeleteByID(c context.Context, collectionID string) 
 	return cu.collectionRepository.DeleteByID(ctx, collectionID)
 }
 
-func (cu *collectionUseCase) GetByID(c context.Context, collectionID string) (*domain.Collection, error) {
+func (cu *collectionUseCase) GetByID(c context.Context, collectionID string) (domain.Collection, error) {
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
 	return cu.collectionRepository.GetByID(ctx, collectionID)
 }
 
-func (cu *collectionUseCase) AddCard(c context.Context, collectionID string, card *domain.Card) error {
+func (cu *collectionUseCase) AddCard(c context.Context, collectionID string, card *domain.Card) (domain.Card, error) {
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
 
+	collection, err := cu.collectionRepository.GetByID(c, collectionID)
+	if err != nil {
+		return domain.Card{}, err
+	}
+
+	card.LocalID = collection.MaxId
 	update := bson.D{
 		{"$push", bson.D{
 			{"cards", card},
@@ -71,7 +70,13 @@ func (cu *collectionUseCase) AddCard(c context.Context, collectionID string, car
 			{"max_id", 1},
 		}},
 	}
-	return cu.collectionRepository.UpdateByID(ctx, collectionID, update)
+
+	answer := domain.Card{
+		LocalID:  card.LocalID,
+		Question: card.Question,
+		Answer:   card.Answer,
+	}
+	return answer, cu.collectionRepository.UpdateByID(ctx, collectionID, update)
 }
 
 func (cu *collectionUseCase) DeleteCard(c context.Context, collectionID string, cardLocalID int) error {
@@ -81,7 +86,7 @@ func (cu *collectionUseCase) DeleteCard(c context.Context, collectionID string, 
 	update := bson.D{
 		{"$pull", bson.D{
 			{"cards", bson.D{
-				{"id", cardLocalID},
+				{"local_id", cardLocalID},
 			}},
 		}},
 	}
@@ -93,7 +98,7 @@ func (cu *collectionUseCase) UpdateCard(c context.Context, collectionID string, 
 	defer cancel()
 
 	filter := bson.D{
-		{"id", collectionID},
+		{"_id", collectionID},
 		{"cards.local_id", card.LocalID},
 	}
 
@@ -103,5 +108,6 @@ func (cu *collectionUseCase) UpdateCard(c context.Context, collectionID string, 
 			{"cards.$.answer", card.Answer},
 		}},
 	}
-	return cu.collectionRepository.Update(ctx, filter, update)
+	err := cu.collectionRepository.Update(ctx, filter, update)
+	return err
 }
