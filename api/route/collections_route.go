@@ -16,13 +16,19 @@ func NewCollectionRouter(env *bootstrap.Env, timeout time.Duration, db database.
 	cc := &controller.CollectionController{
 		CollectionUseCase: usecase.NewCollectionUseCase(cr, timeout),
 	}
-
-	r.Get("/collection/{id}", cc.Get)
-	r.Post("/collection", cc.Create)
-	r.Put("/collection/{id}", cc.Update)
-	r.Delete("/collection/{id}", cc.Delete)
-
-	r.Post("/collection/{id}/card", cc.CreateCard)
-	r.Put("/collection/{id}/card/{cardID}", cc.UpdateCard)
-	r.Delete("/collection/{id}/card/{cardID}", cc.DeleteCard)
+	r.Route("/collection", func(r chi.Router) {
+		r.Post("/", cc.Create)
+		r.Route("/{id}", func(r chi.Router) {
+			r.Get("/", cc.Get)
+			r.Put("/", cc.Update)
+			r.Delete("/", cc.Delete)
+			r.Route("/card", func(r chi.Router) {
+				r.Post("/", cc.CreateCard)
+				r.Route("/{cardID}", func(r chi.Router) {
+					r.Put("/", cc.UpdateCard)
+					r.Delete("/", cc.DeleteCard)
+				})
+			})
+		})
+	})
 }
