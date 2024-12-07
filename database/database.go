@@ -24,7 +24,9 @@ type SingleResult interface {
 	Decode(interface{}) error
 }
 
-type UpdateResult interface{}
+type UpdateResult struct {
+	ModifiedCount int64
+}
 
 type Client interface {
 	Database(string) Database
@@ -75,11 +77,27 @@ func (mc *mongoCollection) FindOne(ctx context.Context, filter interface{}) Sing
 }
 
 func (mc *mongoCollection) UpdateOne(ctx context.Context, filter interface{}, update interface{}, opts ...options.Lister[options.UpdateOptions]) (UpdateResult, error) {
-	return mc.coll.UpdateOne(ctx, filter, update, opts[:]...)
+	res, err := mc.coll.UpdateOne(ctx, filter, update, opts[:]...)
+	if err != nil {
+		return UpdateResult{}, err
+	}
+
+	ur := UpdateResult{
+		ModifiedCount: res.ModifiedCount,
+	}
+	return ur, nil
 }
 
 func (mc *mongoCollection) ReplaceOne(ctx context.Context, filter interface{}, update interface{}, opts ...options.Lister[options.ReplaceOptions]) (UpdateResult, error) {
-	return mc.coll.ReplaceOne(ctx, filter, update, opts[:]...)
+	res, err := mc.coll.ReplaceOne(ctx, filter, update, opts[:]...)
+	if err != nil {
+		return UpdateResult{}, err
+	}
+
+	ur := UpdateResult{
+		ModifiedCount: res.ModifiedCount,
+	}
+	return ur, nil
 }
 
 func (mc *mongoCollection) InsertOne(ctx context.Context, document interface{}) (string, error) {

@@ -22,6 +22,8 @@ func NewSignupUseCase(userRepository domain.UserRepository, timeout time.Duratio
 func (su *signupUseCase) Create(c context.Context, user *domain.User) (string, error) {
 	ctx, cancel := context.WithTimeout(c, su.contextTimeout)
 	defer cancel()
+
+	user.Collections = make([]string, 0)
 	return su.userRepository.Create(ctx, user)
 }
 

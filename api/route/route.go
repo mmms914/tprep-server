@@ -13,11 +13,18 @@ func Setup(env *bootstrap.Env, timeout time.Duration, db database.Database, r *c
 	r.Use(middleware.LoggingMiddleware)
 	r.Use(middleware.Recoverer)
 
-	NewCollectionRouter(env, timeout, db, r)
-	NewUserRouter(env, timeout, db, r)
-	NewSignupRouter(env, timeout, db, r)
-	NewLoginRouter(env, timeout, db, r)
-	NewRefreshTokenRouter(env, timeout, db, r)
+	// public methods
+	r.Group(func(r chi.Router) {
+		NewSignupRouter(env, timeout, db, r)
+		NewLoginRouter(env, timeout, db, r)
+		NewRefreshTokenRouter(env, timeout, db, r)
+		r.Get("/", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("ping")) })
+	})
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("ping")) })
+	// private methods
+	r.Group(func(r chi.Router) {
+		r.Use(middleware.JwtAuthMiddleware(env.AccessTokenSecret))
+		NewCollectionRouter(env, timeout, db, r)
+		NewUserRouter(env, timeout, db, r)
+	})
 }

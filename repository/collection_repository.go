@@ -27,16 +27,14 @@ func (cr *collectionRepository) Create(c context.Context, collection *domain.Col
 	return id, err
 }
 
-func (cr *collectionRepository) UpdateByID(c context.Context, collectionID string, update interface{}) error {
+func (cr *collectionRepository) UpdateByID(c context.Context, collectionID string, update interface{}) (database.UpdateResult, error) {
 	filter := bson.D{{Key: "_id", Value: collectionID}}
 	return cr.Update(c, filter, update)
 }
 
-func (cr *collectionRepository) Update(c context.Context, filter interface{}, update interface{}) error {
+func (cr *collectionRepository) Update(c context.Context, filter interface{}, update interface{}) (database.UpdateResult, error) {
 	collections := cr.database.Collection(cr.collection)
-
-	_, err := collections.UpdateOne(c, filter, update)
-	return err
+	return collections.UpdateOne(c, filter, update)
 }
 
 func (cr *collectionRepository) DeleteByID(c context.Context, collectionID string) error {

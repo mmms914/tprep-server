@@ -7,16 +7,18 @@ const (
 )
 
 type User struct {
-	ID       string `bson:"_id" json:"id"`
-	Username string `bson:"username" json:"username"`
-	Email    string `bson:"email" json:"email"`
-	Password string `bson:"password" json:"password"`
+	ID          string   `bson:"_id" json:"id"`
+	Username    string   `bson:"username" json:"username"`
+	Email       string   `bson:"email" json:"email"`
+	Password    string   `bson:"password" json:"password"`
+	Collections []string `bson:"collections" json:"collections"`
 }
 
 type UserInfo struct {
-	ID       string `bson:"_id" json:"id"`
-	Username string `bson:"username" json:"username"`
-	Email    string `bson:"email" json:"email"`
+	ID          string   `bson:"_id" json:"id"`
+	Username    string   `bson:"username" json:"username"`
+	Email       string   `bson:"email" json:"email"`
+	Collections []string `bson:"collections" json:"collections"`
 }
 
 type UserRepository interface {
@@ -31,4 +33,7 @@ type UserRepository interface {
 type UserUseCase interface {
 	PutByID(c context.Context, userID string, user *User) error
 	GetByID(c context.Context, userID string) (User, error)
+	DeleteByID(c context.Context, userID string) error
+	AddCollection(c context.Context, userID string, collectionID string) error
+	DeleteCollection(c context.Context, userID string, collectionID string) error
 }

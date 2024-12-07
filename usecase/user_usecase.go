@@ -19,13 +19,6 @@ func NewUserUseCase(userRepository domain.UserRepository, timeout time.Duration)
 	}
 }
 
-func (uu *userUseCase) Create(c context.Context, user *domain.User) (string, error) {
-	ctx, cancel := context.WithTimeout(c, uu.contextTimeout)
-	defer cancel()
-
-	return uu.userRepository.Create(ctx, user)
-}
-
 func (uu *userUseCase) PutByID(c context.Context, userID string, user *domain.User) error {
 	ctx, cancel := context.WithTimeout(c, uu.contextTimeout)
 	defer cancel()
@@ -49,4 +42,28 @@ func (uu *userUseCase) GetByID(c context.Context, userID string) (domain.User, e
 	ctx, cancel := context.WithTimeout(c, uu.contextTimeout)
 	defer cancel()
 	return uu.userRepository.GetByID(ctx, userID)
+}
+
+func (uu *userUseCase) AddCollection(c context.Context, userID string, collectionID string) error {
+	ctx, cancel := context.WithTimeout(c, uu.contextTimeout)
+	defer cancel()
+
+	update := bson.D{
+		{"$push", bson.D{
+			{"collections", collectionID},
+		}},
+	}
+	return uu.userRepository.UpdateByID(ctx, userID, update)
+}
+
+func (uu *userUseCase) DeleteCollection(c context.Context, userID string, collectionID string) error {
+	ctx, cancel := context.WithTimeout(c, uu.contextTimeout)
+	defer cancel()
+
+	update := bson.D{
+		{"$pull", bson.D{
+			{"collections", collectionID},
+		}},
+	}
+	return uu.userRepository.UpdateByID(ctx, userID, update)
 }

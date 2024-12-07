@@ -12,9 +12,13 @@ import (
 )
 
 func NewCollectionRouter(env *bootstrap.Env, timeout time.Duration, db database.Database, r chi.Router) {
+	ur := repository.NewUserRepository(db, domain.UserCollection)
+	uuc := usecase.NewUserUseCase(ur, timeout)
+
 	cr := repository.NewCollectionRepository(db, domain.CollectionCollection)
 	cc := &controller.CollectionController{
 		CollectionUseCase: usecase.NewCollectionUseCase(cr, timeout),
+		UserUseCase:       uuc,
 	}
 	r.Route("/collection", func(r chi.Router) {
 		r.Post("/", cc.Create)

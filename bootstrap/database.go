@@ -3,7 +3,6 @@ package bootstrap
 import (
 	"context"
 	"github.com/gookit/slog"
-	"log"
 	"main/database"
 	"time"
 )
@@ -21,12 +20,12 @@ func NewMongoDatabase(env *Env) database.Client {
 
 	client, err := database.NewClient(mongodbURI)
 	if err != nil {
-		log.Fatal(err)
+		slog.Fatal(err)
 	}
 
 	err = client.Ping(ctx)
 	if err != nil {
-		log.Fatal(err)
+		slog.Fatal(err)
 	}
 
 	slog.Println("Successfully connected to MongoDB!")

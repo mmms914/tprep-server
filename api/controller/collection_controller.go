@@ -10,10 +10,12 @@ import (
 
 type CollectionController struct {
 	CollectionUseCase domain.CollectionUseCase
+	UserUseCase       domain.UserUseCase
 }
 
 func (cc *CollectionController) Create(w http.ResponseWriter, r *http.Request) {
 	var collection domain.Collection
+
 	err := json.NewDecoder(r.Body).Decode(&collection)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusBadRequest)
@@ -25,6 +27,9 @@ func (cc *CollectionController) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userID := r.Context().Value("x-user-id").(string)
+	collection.Author = userID
+
 	id, err := cc.CollectionUseCase.Create(r.Context(), &collection)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
@@ -32,6 +37,12 @@ func (cc *CollectionController) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	collection, err = cc.CollectionUseCase.GetByID(r.Context(), id)
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	err = cc.UserUseCase.AddCollection(r.Context(), userID, id)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
 		return
@@ -51,6 +62,8 @@ func (cc *CollectionController) Create(w http.ResponseWriter, r *http.Request) {
 
 func (cc *CollectionController) Update(w http.ResponseWriter, r *http.Request) {
 	var collection domain.Collection
+	userID := r.Context().Value("x-user-id").(string)
+
 	err := json.NewDecoder(r.Body).Decode(&collection)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusBadRequest)
@@ -63,6 +76,17 @@ func (cc *CollectionController) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := chi.URLParam(r, "id")
+	coll, err := cc.CollectionUseCase.GetByID(r.Context(), id)
+	if err != nil {
+		http.Error(w, jsonError("There is no collection with this ID"), http.StatusNotFound)
+		return
+	}
+
+	if coll.Author != userID {
+		http.Error(w, jsonError("You are not the owner of this collection"), http.StatusForbidden)
+		return
+	}
+
 	err = cc.CollectionUseCase.PutByID(r.Context(), id, &collection)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
@@ -77,10 +101,17 @@ func (cc *CollectionController) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cc *CollectionController) Get(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value("x-user-id").(string)
+
 	id := chi.URLParam(r, "id")
 	collection, err := cc.CollectionUseCase.GetByID(r.Context(), id)
 	if err != nil {
-		http.Error(w, jsonError(err.Error()), http.StatusNotFound)
+		http.Error(w, jsonError("There is no collection with this ID"), http.StatusNotFound)
+		return
+	}
+
+	if userID != collection.Author && collection.IsPublic == false {
+		http.Error(w, jsonError("You are not the owner of this collection"), http.StatusForbidden)
 		return
 	}
 
@@ -97,12 +128,33 @@ func (cc *CollectionController) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cc *CollectionController) Delete(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value("x-user-id").(string)
+
 	id := chi.URLParam(r, "id")
-	err := cc.CollectionUseCase.DeleteByID(r.Context(), id)
+
+	coll, err := cc.CollectionUseCase.GetByID(r.Context(), id)
+	if err != nil {
+		http.Error(w, jsonError("There is no collection with this ID"), http.StatusNotFound)
+		return
+	}
+
+	if coll.Author != userID {
+		http.Error(w, jsonError("You are not the owner of this collection"), http.StatusForbidden)
+		return
+	}
+
+	err = cc.CollectionUseCase.DeleteByID(r.Context(), id)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusNotFound)
 		return
 	}
+
+	err = cc.UserUseCase.DeleteCollection(r.Context(), userID, id)
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(domain.SuccessResponse{
@@ -112,6 +164,8 @@ func (cc *CollectionController) Delete(w http.ResponseWriter, r *http.Request) {
 
 func (cc *CollectionController) CreateCard(w http.ResponseWriter, r *http.Request) {
 	var card domain.Card
+	userID := r.Context().Value("x-user-id").(string)
+
 	err := json.NewDecoder(r.Body).Decode(&card)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusBadRequest)
@@ -122,11 +176,24 @@ func (cc *CollectionController) CreateCard(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	collectionID := chi.URLParam(r, "id")
+
+	coll, err := cc.CollectionUseCase.GetByID(r.Context(), collectionID)
+	if err != nil {
+		http.Error(w, jsonError("There is no collection with this ID"), http.StatusNotFound)
+		return
+	}
+
+	if coll.Author != userID {
+		http.Error(w, jsonError("You are not the owner of this collection"), http.StatusForbidden)
+		return
+	}
+
 	card, err = cc.CollectionUseCase.AddCard(r.Context(), collectionID, &card)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(card)
@@ -134,6 +201,8 @@ func (cc *CollectionController) CreateCard(w http.ResponseWriter, r *http.Reques
 
 func (cc *CollectionController) UpdateCard(w http.ResponseWriter, r *http.Request) {
 	var card domain.Card
+	userID := r.Context().Value("x-user-id").(string)
+
 	err := json.NewDecoder(r.Body).Decode(&card)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusBadRequest)
@@ -152,6 +221,17 @@ func (cc *CollectionController) UpdateCard(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	coll, err := cc.CollectionUseCase.GetByID(r.Context(), id)
+	if err != nil {
+		http.Error(w, jsonError("There is no collection with this ID"), http.StatusNotFound)
+		return
+	}
+
+	if coll.Author != userID {
+		http.Error(w, jsonError("You are not the owner of this collection"), http.StatusForbidden)
+		return
+	}
+
 	err = cc.CollectionUseCase.UpdateCard(r.Context(), id, &card)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
@@ -166,12 +246,26 @@ func (cc *CollectionController) UpdateCard(w http.ResponseWriter, r *http.Reques
 }
 
 func (cc *CollectionController) DeleteCard(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value("x-user-id").(string)
+
 	collectionID := chi.URLParam(r, "id")
 	cardID, err := strconv.Atoi(chi.URLParam(r, "cardID"))
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
 		return
 	}
+
+	coll, err := cc.CollectionUseCase.GetByID(r.Context(), collectionID)
+	if err != nil {
+		http.Error(w, jsonError("There is no collection with this ID"), http.StatusNotFound)
+		return
+	}
+
+	if coll.Author != userID {
+		http.Error(w, jsonError("You are not the owner of this collection"), http.StatusForbidden)
+		return
+	}
+
 	err = cc.CollectionUseCase.DeleteCard(r.Context(), collectionID, cardID)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusNotFound)

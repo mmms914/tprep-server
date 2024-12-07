@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"main/domain"
 	"time"
@@ -37,7 +38,15 @@ func (cu *collectionUseCase) PutByID(c context.Context, collectionID string, col
 			{"is_public", collection.IsPublic},
 		}},
 	}
-	return cu.collectionRepository.UpdateByID(ctx, collectionID, update)
+	res, err := cu.collectionRepository.UpdateByID(ctx, collectionID, update)
+	if err != nil {
+		return err
+	}
+
+	if res.ModifiedCount == 0 {
+		return errors.New("collection not exists")
+	}
+	return nil
 }
 
 func (cu *collectionUseCase) DeleteByID(c context.Context, collectionID string) error {
@@ -76,7 +85,9 @@ func (cu *collectionUseCase) AddCard(c context.Context, collectionID string, car
 		Question: card.Question,
 		Answer:   card.Answer,
 	}
-	return answer, cu.collectionRepository.UpdateByID(ctx, collectionID, update)
+
+	_, err = cu.collectionRepository.UpdateByID(ctx, collectionID, update)
+	return answer, err
 }
 
 func (cu *collectionUseCase) DeleteCard(c context.Context, collectionID string, cardLocalID int) error {
@@ -90,7 +101,15 @@ func (cu *collectionUseCase) DeleteCard(c context.Context, collectionID string, 
 			}},
 		}},
 	}
-	return cu.collectionRepository.UpdateByID(ctx, collectionID, update)
+	res, err := cu.collectionRepository.UpdateByID(ctx, collectionID, update)
+	if err != nil {
+		return err
+	}
+
+	if res.ModifiedCount == 0 {
+		return errors.New("card not exists")
+	}
+	return nil
 }
 
 func (cu *collectionUseCase) UpdateCard(c context.Context, collectionID string, card *domain.Card) error {
@@ -108,6 +127,13 @@ func (cu *collectionUseCase) UpdateCard(c context.Context, collectionID string, 
 			{"cards.$.answer", card.Answer},
 		}},
 	}
-	err := cu.collectionRepository.Update(ctx, filter, update)
-	return err
+	res, err := cu.collectionRepository.Update(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+
+	if res.ModifiedCount == 0 {
+		return errors.New("card not exists")
+	}
+	return nil
 }

@@ -2,7 +2,6 @@ package controller
 
 import (
 	"encoding/json"
-	"github.com/go-chi/chi/v5"
 	"main/domain"
 	"net/http"
 )
@@ -12,7 +11,8 @@ type UserController struct {
 }
 
 func (uc *UserController) Get(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
+	id := r.Context().Value("x-user-id").(string)
+
 	user, err := uc.UserUseCase.GetByID(r.Context(), id)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusNotFound)
@@ -20,9 +20,10 @@ func (uc *UserController) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userInfo := domain.UserInfo{
-		ID:       user.ID,
-		Username: user.Username,
-		Email:    user.Email,
+		ID:          user.ID,
+		Username:    user.Username,
+		Email:       user.Email,
+		Collections: user.Collections,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -43,7 +44,7 @@ func (uc *UserController) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id := chi.URLParam(r, "id")
+	id := r.Context().Value("x-user-id").(string)
 	err = uc.UserUseCase.PutByID(r.Context(), id, &user)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)

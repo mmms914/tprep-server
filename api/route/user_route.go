@@ -16,8 +16,6 @@ func NewUserRouter(env *bootstrap.Env, timeout time.Duration, db database.Databa
 	uc := &controller.UserController{
 		UserUseCase: usecase.NewUserUseCase(ur, timeout),
 	}
-	r.Route("/user/{id}", func(r chi.Router) {
-		r.Get("/", uc.Get)
-		r.Put("/", uc.Update)
-	})
+	r.Get("/user", uc.Get)
+	r.Put("/user/{id}", uc.Update)
 }

@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"main/database"
 )
 
 const (
@@ -14,6 +15,7 @@ type Collection struct {
 	IsPublic bool   `bson:"is_public" json:"is_public"`
 	Cards    []Card `bson:"cards" json:"cards"`
 	MaxId    int    `bson:"max_id" json:"max_id"`
+	Author   string `bson:"author" json:"author"`
 }
 
 type CollectionInfo struct {
@@ -25,8 +27,8 @@ type CollectionInfo struct {
 
 type CollectionRepository interface {
 	Create(c context.Context, collection *Collection) (string, error)
-	Update(c context.Context, filter interface{}, update interface{}) error
-	UpdateByID(c context.Context, collectionID string, update interface{}) error
+	Update(c context.Context, filter interface{}, update interface{}) (database.UpdateResult, error)
+	UpdateByID(c context.Context, collectionID string, update interface{}) (database.UpdateResult, error)
 	DeleteByID(c context.Context, collectionID string) error
 	GetByID(c context.Context, collectionID string) (Collection, error)
 }
