@@ -1,0 +1,57 @@
+package controller
+
+import (
+	"encoding/json"
+	"golang.org/x/crypto/bcrypt"
+	"main/bootstrap"
+	"main/domain"
+	"net/http"
+)
+
+type LoginController struct {
+	LoginUseCase domain.LoginUseCase
+	Env          *bootstrap.Env
+}
+
+func (lc *LoginController) Login(w http.ResponseWriter, r *http.Request) {
+	var request domain.LoginRequest
+
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusBadRequest)
+		return
+	}
+
+	user, err := lc.LoginUseCase.GetUserByEmail(r.Context(), request.Email)
+	if err != nil {
+		http.Error(w, jsonError("User with this email not found"), http.StatusBadRequest)
+		return
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password))
+	if err != nil {
+		http.Error(w, jsonError("Invalid credentials"), http.StatusInternalServerError)
+		return
+	}
+
+	accessToken, err := lc.LoginUseCase.CreateAccessToken(&user, lc.Env.AccessTokenSecret, lc.Env.AccessTokenExpiryHour)
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	refreshToken, err := lc.LoginUseCase.CreateRefreshToken(&user, lc.Env.RefreshTokenSecret, lc.Env.RefreshTokenExpiryHour)
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	loginResponse := domain.LoginResponse{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(loginResponse)
+}
