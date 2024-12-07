@@ -17,6 +17,7 @@ func Setup(env *bootstrap.Env, timeout time.Duration, db database.Database, r *c
 	NewUserRouter(env, timeout, db, r)
 	NewSignupRouter(env, timeout, db, r)
 	NewLoginRouter(env, timeout, db, r)
+	NewRefreshTokenRouter(env, timeout, db, r)
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("ping")) })
 }
