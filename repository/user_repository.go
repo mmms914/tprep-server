@@ -1,0 +1,55 @@
+package repository
+
+import (
+	"context"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"main/database"
+	"main/domain"
+	"main/internal"
+)
+
+type userRepository struct {
+	database   database.Database
+	collection string
+}
+
+func NewUserRepository(db database.Database, collection string) domain.UserRepository {
+	return &userRepository{
+		database:   db,
+		collection: collection,
+	}
+}
+
+func (ur *userRepository) Create(c context.Context, user *domain.User) (string, error) {
+	collection := ur.database.Collection(ur.collection)
+	user.ID = internal.GenerateUUID()
+	id, err := collection.InsertOne(c, user)
+	return id, err
+}
+
+func (ur *userRepository) UpdateByID(c context.Context, userID string, update interface{}) error {
+	filter := bson.D{{Key: "_id", Value: userID}}
+	return ur.Update(c, filter, update)
+}
+
+func (ur *userRepository) Update(c context.Context, filter interface{}, update interface{}) error {
+	collection := ur.database.Collection(ur.collection)
+
+	_, err := collection.UpdateOne(c, filter, update)
+	return err
+}
+
+func (ur *userRepository) DeleteByID(c context.Context, userID string) error {
+	collection := ur.database.Collection(ur.collection)
+	filter := bson.D{{Key: "_id", Value: userID}}
+	_, err := collection.DeleteOne(c, filter)
+	return err
+}
+
+func (ur *userRepository) GetByID(c context.Context, userID string) (domain.User, error) {
+	var user domain.User
+	collection := ur.database.Collection(ur.collection)
+	filter := bson.D{{Key: "_id", Value: userID}}
+	err := collection.FindOne(c, filter).Decode(&user)
+	return user, err
+}

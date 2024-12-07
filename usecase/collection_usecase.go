@@ -27,7 +27,7 @@ func (cu *collectionUseCase) Create(c context.Context, collection *domain.Collec
 	return cu.collectionRepository.Create(ctx, collection)
 }
 
-func (cu *collectionUseCase) PutByID(c context.Context, collectionID string, collection domain.Collection) error {
+func (cu *collectionUseCase) PutByID(c context.Context, collectionID string, collection *domain.Collection) error {
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
 

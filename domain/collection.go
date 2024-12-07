@@ -33,7 +33,7 @@ type CollectionRepository interface {
 
 type CollectionUseCase interface {
 	Create(c context.Context, collection *Collection) (string, error)
-	PutByID(c context.Context, collectionID string, collection Collection) error
+	PutByID(c context.Context, collectionID string, collection *Collection) error
 	DeleteByID(c context.Context, collectionID string) error
 	GetByID(c context.Context, collectionID string) (Collection, error)
 

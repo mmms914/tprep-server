@@ -63,7 +63,7 @@ func (cc *CollectionController) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id := chi.URLParam(r, "id")
-	err = cc.CollectionUseCase.PutByID(r.Context(), id, collection)
+	err = cc.CollectionUseCase.PutByID(r.Context(), id, &collection)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
 		return
