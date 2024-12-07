@@ -7,14 +7,18 @@ import (
 )
 
 type Env struct {
-	AppEnv         string `mapstructure:"APP_ENV"`
-	Port           int    `mapstructure:"PORT"`
-	LocalMongoURI  string `mapstructure:"LOCAL_MONGO_URI"`
-	DockerMongoURI string `mapstructure:"DOCKER_MONGO_URI"`
-	DBName         string `mapstructure:"DB_NAME"`
-	DBPort         int    `mapstructure:"DB_PORT"`
-	MongoDir       string `mapstructure:"MONGO_DIR"`
-	ContextTimeout int    `mapstructure:"CONTEXT_TIMEOUT"`
+	AppEnv                 string `mapstructure:"APP_ENV"`
+	Port                   int    `mapstructure:"PORT"`
+	LocalMongoURI          string `mapstructure:"LOCAL_MONGO_URI"`
+	DockerMongoURI         string `mapstructure:"DOCKER_MONGO_URI"`
+	DBName                 string `mapstructure:"DB_NAME"`
+	DBPort                 int    `mapstructure:"DB_PORT"`
+	MongoDir               string `mapstructure:"MONGO_DIR"`
+	ContextTimeout         int    `mapstructure:"CONTEXT_TIMEOUT"`
+	AccessTokenSecret      string `mapstructure:"ACCESS_TOKEN_SECRET"`
+	AccessTokenExpiryHour  int    `mapstructure:"ACCESS_TOKEN_EXPIRY_HOUR"`
+	RefreshTokenSecret     string `mapstructure:"REFRESH_TOKEN_SECRET"`
+	RefreshTokenExpiryHour int    `mapstructure:"REFRESH_TOKEN_EXPIRY_HOUR"`
 }
 
 func NewEnv() *Env {

@@ -25,11 +25,10 @@ type UserRepository interface {
 	UpdateByID(c context.Context, userID string, update interface{}) error
 	DeleteByID(c context.Context, userID string) error
 	GetByID(c context.Context, userID string) (User, error)
+	GetByEmail(c context.Context, email string) (User, error)
 }
 
 type UserUseCase interface {
-	Create(c context.Context, user *User) (string, error)
 	PutByID(c context.Context, userID string, user *User) error
-	DeleteByID(c context.Context, userID string) error
 	GetByID(c context.Context, userID string) (User, error)
 }
