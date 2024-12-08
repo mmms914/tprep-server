@@ -43,7 +43,7 @@ func (cu *collectionUseCase) PutByID(c context.Context, collectionID string, col
 		return err
 	}
 
-	if res.ModifiedCount == 0 {
+	if res.MatchedCount == 0 {
 		return errors.New("collection not exists")
 	}
 	return nil
@@ -106,7 +106,7 @@ func (cu *collectionUseCase) DeleteCard(c context.Context, collectionID string, 
 		return err
 	}
 
-	if res.ModifiedCount == 0 {
+	if res.MatchedCount == 0 {
 		return errors.New("card not exists")
 	}
 	return nil
@@ -132,7 +132,7 @@ func (cu *collectionUseCase) UpdateCard(c context.Context, collectionID string, 
 		return err
 	}
 
-	if res.ModifiedCount == 0 {
+	if res.MatchedCount == 0 {
 		return errors.New("card not exists")
 	}
 	return nil

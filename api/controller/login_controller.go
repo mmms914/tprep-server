@@ -24,7 +24,7 @@ func (lc *LoginController) Login(w http.ResponseWriter, r *http.Request) {
 
 	user, err := lc.LoginUseCase.GetUserByEmail(r.Context(), request.Email)
 	if err != nil {
-		http.Error(w, jsonError("User with this email not found"), http.StatusBadRequest)
+		http.Error(w, jsonError("User with this email not found"), http.StatusNotFound)
 		return
 	}
 
@@ -34,13 +34,13 @@ func (lc *LoginController) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, err := lc.LoginUseCase.CreateAccessToken(&user, lc.Env.AccessTokenSecret, lc.Env.AccessTokenExpiryHour)
+	accessToken, expAccess, err := lc.LoginUseCase.CreateAccessToken(&user, lc.Env.AccessTokenSecret, lc.Env.AccessTokenExpiryHour)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
 		return
 	}
 
-	refreshToken, err := lc.LoginUseCase.CreateRefreshToken(&user, lc.Env.RefreshTokenSecret, lc.Env.RefreshTokenExpiryHour)
+	refreshToken, expRefresh, err := lc.LoginUseCase.CreateRefreshToken(&user, lc.Env.RefreshTokenSecret, lc.Env.RefreshTokenExpiryHour)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
 		return
@@ -52,6 +52,8 @@ func (lc *LoginController) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Access-Expires-After", expAccess.UTC().String())
+	w.Header().Set("X-Refresh-Expires-After", expRefresh.UTC().String())
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(loginResponse)
 }

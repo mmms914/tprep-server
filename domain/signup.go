@@ -1,6 +1,9 @@
 package domain
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 type SignupRequest struct {
 	Username string `json:"username"`
@@ -17,6 +20,6 @@ type SignupResponse struct {
 type SignupUseCase interface {
 	Create(c context.Context, user *User) (string, error)
 	GetUserByEmail(c context.Context, email string) (User, error)
-	CreateAccessToken(user *User, secret string, expiry int) (accessToken string, err error)
-	CreateRefreshToken(user *User, secret string, expiry int) (refreshToken string, err error)
+	CreateAccessToken(user *User, secret string, expiry int) (accessToken string, exp time.Time, err error)
+	CreateRefreshToken(user *User, secret string, expiry int) (refreshToken string, exp time.Time, err error)
 }

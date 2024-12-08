@@ -25,11 +25,11 @@ func (rtu *refreshTokenUseCase) GetUserByID(c context.Context, email string) (do
 	return rtu.userRepository.GetByID(ctx, email)
 }
 
-func (rtu *refreshTokenUseCase) CreateAccessToken(user *domain.User, secret string, expiry int) (accessToken string, err error) {
+func (rtu *refreshTokenUseCase) CreateAccessToken(user *domain.User, secret string, expiry int) (accessToken string, exp time.Time, err error) {
 	return internal.CreateAccessToken(user, secret, expiry)
 }
 
-func (rtu *refreshTokenUseCase) CreateRefreshToken(user *domain.User, secret string, expiry int) (refreshToken string, err error) {
+func (rtu *refreshTokenUseCase) CreateRefreshToken(user *domain.User, secret string, expiry int) (refreshToken string, exp time.Time, err error) {
 	return internal.CreateRefreshToken(user, secret, expiry)
 }
 

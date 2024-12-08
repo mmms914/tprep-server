@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func CreateAccessToken(user *domain.User, secret string, expiry int) (accessToken string, err error) {
+func CreateAccessToken(user *domain.User, secret string, expiry int) (accessToken string, exp time.Time, err error) {
 	expTime := time.Now().Add(time.Duration(expiry) * time.Hour)
 	claims := &domain.JwtCustomClaims{
 		Username: user.Username,
@@ -20,13 +20,13 @@ func CreateAccessToken(user *domain.User, secret string, expiry int) (accessToke
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	t, err := token.SignedString([]byte(secret))
 	if err != nil {
-		return "", err
+		return "", expTime, err
 	}
 
-	return t, nil
+	return t, expTime, nil
 }
 
-func CreateRefreshToken(user *domain.User, secret string, expiry int) (refreshToken string, err error) {
+func CreateRefreshToken(user *domain.User, secret string, expiry int) (refreshToken string, exp time.Time, err error) {
 	expTime := time.Now().Add(time.Duration(expiry) * time.Hour)
 	claimsRefresh := &domain.JwtCustomClaims{
 		ID: user.ID,
@@ -37,10 +37,10 @@ func CreateRefreshToken(user *domain.User, secret string, expiry int) (refreshTo
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claimsRefresh)
 	rt, err := token.SignedString([]byte(secret))
 	if err != nil {
-		return "", err
+		return "", expTime, err
 	}
 
-	return rt, nil
+	return rt, expTime, nil
 }
 
 func ExtractIDFromToken(requestToken string, secret string) (string, error) {

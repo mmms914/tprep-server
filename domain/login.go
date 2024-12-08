@@ -1,6 +1,9 @@
 package domain
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 type LoginRequest struct {
 	Email    string `json:"email"`
@@ -14,6 +17,6 @@ type LoginResponse struct {
 
 type LoginUseCase interface {
 	GetUserByEmail(c context.Context, email string) (User, error)
-	CreateAccessToken(user *User, secret string, expiry int) (accessToken string, err error)
-	CreateRefreshToken(user *User, secret string, expiry int) (refreshToken string, err error)
+	CreateAccessToken(user *User, secret string, expiry int) (accessToken string, expTime time.Time, err error)
+	CreateRefreshToken(user *User, secret string, expiry int) (refreshToken string, expTime time.Time, err error)
 }

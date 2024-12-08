@@ -40,7 +40,7 @@ func (uc *UserController) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if user.Username == "" || user.Email == "" {
-		http.Error(w, jsonError("Invalid username"), http.StatusBadRequest)
+		http.Error(w, jsonError("Invalid data"), http.StatusBadRequest)
 		return
 	}
 

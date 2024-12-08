@@ -25,6 +25,7 @@ type SingleResult interface {
 }
 
 type UpdateResult struct {
+	MatchedCount  int64
 	ModifiedCount int64
 }
 
@@ -83,6 +84,7 @@ func (mc *mongoCollection) UpdateOne(ctx context.Context, filter interface{}, up
 	}
 
 	ur := UpdateResult{
+		MatchedCount:  res.MatchedCount,
 		ModifiedCount: res.ModifiedCount,
 	}
 	return ur, nil
@@ -95,6 +97,7 @@ func (mc *mongoCollection) ReplaceOne(ctx context.Context, filter interface{}, u
 	}
 
 	ur := UpdateResult{
+		MatchedCount:  res.MatchedCount,
 		ModifiedCount: res.ModifiedCount,
 	}
 	return ur, nil

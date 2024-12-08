@@ -33,10 +33,10 @@ func (su *signupUseCase) GetUserByEmail(c context.Context, email string) (domain
 	return su.userRepository.GetByEmail(ctx, email)
 }
 
-func (su *signupUseCase) CreateAccessToken(user *domain.User, secret string, expiry int) (accessToken string, err error) {
+func (su *signupUseCase) CreateAccessToken(user *domain.User, secret string, expiry int) (accessToken string, exp time.Time, err error) {
 	return internal.CreateAccessToken(user, secret, expiry)
 }
 
-func (su *signupUseCase) CreateRefreshToken(user *domain.User, secret string, expiry int) (refreshToken string, err error) {
+func (su *signupUseCase) CreateRefreshToken(user *domain.User, secret string, expiry int) (refreshToken string, exp time.Time, err error) {
 	return internal.CreateRefreshToken(user, secret, expiry)
 }

@@ -1,6 +1,9 @@
 package domain
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 type RefreshTokenRequest struct {
 	RefreshToken string `json:"refresh_token"`
@@ -13,7 +16,7 @@ type RefreshTokenResponse struct {
 
 type RefreshTokenUseCase interface {
 	GetUserByID(c context.Context, id string) (User, error)
-	CreateAccessToken(user *User, secret string, expiry int) (accessToken string, err error)
-	CreateRefreshToken(user *User, secret string, expiry int) (refreshToken string, err error)
+	CreateAccessToken(user *User, secret string, expiry int) (accessToken string, exp time.Time, err error)
+	CreateRefreshToken(user *User, secret string, expiry int) (refreshToken string, exp time.Time, err error)
 	ExtractIDFromToken(requestToken string, secret string) (string, error)
 }
