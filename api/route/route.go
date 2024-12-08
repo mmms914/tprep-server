@@ -12,6 +12,7 @@ import (
 func Setup(env *bootstrap.Env, timeout time.Duration, db database.Database, r *chi.Mux) {
 	r.Use(middleware.LoggingMiddleware)
 	r.Use(middleware.Recoverer)
+	r.Use(middleware.CORSHandler)
 
 	// public methods
 	r.Group(func(r chi.Router) {
