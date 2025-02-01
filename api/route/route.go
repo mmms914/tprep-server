@@ -27,5 +27,6 @@ func Setup(env *bootstrap.Env, timeout time.Duration, db database.Database, r *c
 		r.Use(middleware.JwtAuthMiddleware(env.AccessTokenSecret))
 		NewCollectionRouter(env, timeout, db, r)
 		NewUserRouter(env, timeout, db, r)
+		NewGlobalRouter(env, timeout, r)
 	})
 }
