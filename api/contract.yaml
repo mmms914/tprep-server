@@ -42,7 +42,7 @@ paths:
             schema:
               type: integer
           - name: preferred_time
-            description: Предпочитаемое время начала тренировок (в секундах, 0 - 86399, где 0 - 00:00, а 86399 - 23:59)
+            description: Предпочитаемое время начала тренировок (в секундах, 0 - 86399, где 0 - 00:00, а 86399 - 23:59) - UTC +0tz
             in: query
             required: true 
             schema:
