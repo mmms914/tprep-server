@@ -1,8 +1,8 @@
 package domain
 
 type PlanResponse struct {
-	Count int
-	Items []int
+	Count int   `bson:"count" json:"count"`
+	Items []int `bson:"items" json:"items"`
 }
 
 type GlobalUseCase interface {
