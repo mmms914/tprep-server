@@ -7,7 +7,10 @@ servers:
 - url: http://217.71.129.139:5094
 tags:
   - name: public
-    description: Общие методы
+    description: Публичные методы
+    
+  - name: global
+    description: Глобальные НЕпубличные методы
   
   - name: card
     description: Взаимодействие с картой
@@ -18,6 +21,68 @@ tags:
   - name: user
     description: Операции над пользователем
 paths:
+  /global/getTrainingPlan:
+      get:
+        tags:
+          - global
+        summary: Получение плана тренировок
+        description: План тренировок в соответствии с кривой забывания; разница между finish_date и start_date не должна быть меньше суток
+        operationId: getTrainingPlan
+        parameters:
+          - name: start_date
+            description: Дата и время начала тренировок (в формате timestamp); так как в приложении выбирается только дата, если дата сегодняшняя, время это текущее + минута, иначе - предпочитаемое
+            in: query
+            required: true 
+            schema:
+              type: integer
+          - name: finish_date
+            description: Дата и время конца тренировок (в формате timestamp); так как в приложении выбирается только дата, за время рекомендуется принимать 23:59, хотя некритично
+            in: query
+            required: true 
+            schema:
+              type: integer
+          - name: prefered_time
+            description: Предпочитаемое время начала тренировок (в секундах, 0 - 86399, где 0 - 00:00, а 86399 - 23:59)
+            in: query
+            required: true 
+            schema:
+              type: integer
+        responses:
+          '200':
+            description: план успешно создан, возвращаются даты и времена тренировок (unix timestamp)
+            content:
+              application/json:
+                schema:
+                  type: object
+                  example: {"count": 3, "items": [1738416995, 1738526995, 1738636995]}
+                  properties:
+                    count:
+                      type: integer
+                      example: количество тренировок
+                    items:
+                      type: array
+                      items:
+                        type: integer
+          '400':
+            description: неверные данные
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: preffered time invalid
+          '401':
+            description: токен недействителен
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: "*custom error*"
   /public/signup:
     post:
       tags:
