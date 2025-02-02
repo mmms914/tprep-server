@@ -35,13 +35,13 @@ paths:
             required: true 
             schema:
               type: integer
-          - name: finish_date
+          - name: end_date
             description: Дата и время конца тренировок (в формате timestamp); так как в приложении выбирается только дата, за время рекомендуется принимать 23:59, хотя некритично
             in: query
             required: true 
             schema:
               type: integer
-          - name: prefered_time
+          - name: preferred_time
             description: Предпочитаемое время начала тренировок (в секундах, 0 - 86399, где 0 - 00:00, а 86399 - 23:59)
             in: query
             required: true 

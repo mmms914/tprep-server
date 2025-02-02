@@ -28,7 +28,7 @@ func (gc *GlobalController) GetTrainingPlan(w http.ResponseWriter, r *http.Reque
 
 	preferredTime, err := strconv.Atoi(r.URL.Query().Get("preferred_time"))
 	if err != nil || preferredTime < 0 || preferredTime > 86399 {
-		http.Error(w, jsonError("invalid prefered time"), http.StatusBadRequest)
+		http.Error(w, jsonError("invalid preferred time"), http.StatusBadRequest)
 		return
 	}
 
