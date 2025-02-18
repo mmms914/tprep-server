@@ -61,6 +61,12 @@ func (cu *collectionUseCase) GetByID(c context.Context, collectionID string) (do
 	return cu.collectionRepository.GetByID(ctx, collectionID)
 }
 
+func (cu *collectionUseCase) FindByFilter(c context.Context, filter interface{}) ([]domain.Collection, error) {
+	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
+	defer cancel()
+	return cu.collectionRepository.GetByFilter(ctx, filter)
+}
+
 func (cu *collectionUseCase) AddCard(c context.Context, collectionID string, card *domain.Card) (domain.Card, error) {
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()

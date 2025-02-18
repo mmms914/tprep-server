@@ -51,3 +51,17 @@ func (cr *collectionRepository) GetByID(c context.Context, collectionID string) 
 	err := collections.FindOne(c, filter).Decode(&result)
 	return result, err
 }
+
+func (cr *collectionRepository) GetByFilter(c context.Context, filter interface{}) ([]domain.Collection, error) {
+	var results []domain.Collection
+	collections := cr.database.Collection(cr.collection)
+	cursor, err := collections.Find(c, filter)
+	if err != nil {
+		return nil, err
+	}
+	err = cursor.All(c, &results)
+	if err != nil {
+		return nil, err
+	}
+	return results, err
+}

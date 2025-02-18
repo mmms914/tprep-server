@@ -31,6 +31,7 @@ type CollectionRepository interface {
 	UpdateByID(c context.Context, collectionID string, update interface{}) (database.UpdateResult, error)
 	DeleteByID(c context.Context, collectionID string) error
 	GetByID(c context.Context, collectionID string) (Collection, error)
+	GetByFilter(c context.Context, filter interface{}) ([]Collection, error)
 }
 
 type CollectionUseCase interface {
@@ -38,6 +39,7 @@ type CollectionUseCase interface {
 	PutByID(c context.Context, collectionID string, collection *Collection) error
 	DeleteByID(c context.Context, collectionID string) error
 	GetByID(c context.Context, collectionID string) (Collection, error)
+	FindByFilter(c context.Context, filter interface{}) ([]Collection, error)
 
 	AddCard(c context.Context, collectionID string, card *Card) (Card, error)
 	DeleteCard(c context.Context, collectionID string, cardLocalID int) error
