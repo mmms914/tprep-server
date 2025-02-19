@@ -614,6 +614,52 @@ paths:
                     example: "*custom error*"
       security:
         - bearerAuth: []
+  /collection/search:
+    post:
+      tags:
+        - collection
+      summary: Поиск публичных колод
+      operationId: searchCollections
+      parameters:
+          - name: name
+            in: query
+            required: false
+            description: если параметр не задан, возвращаются все публичные колоды
+            schema:
+              type: string
+              example: математика 5 класс
+      responses:
+        '200':
+          description: поиск прошел успешно, возвращается массив с превью колод
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CollectionPreview"
+        '401':
+          description: токен недействителен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Not authorized
+                
+        '404':
+          description: коллекции по данному запросу не были найдены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Сouldn't find anything
+      security:
+        - bearerAuth: []
   /collection/{id}:
     get:
       tags:
@@ -834,6 +880,22 @@ components:
               "answer": "ok"
             }
             ]
+    CollectionPreview:
+      type: object
+      description: для получения карт колоды вызвать GET с id
+      properties:
+        id:
+          type: string
+          example: b3c337b6-171a-48cc-84ef-861398338f8c
+        name:
+          type: string
+          example: theUserCollection
+        is_public:
+          type: boolean
+          example: true
+        cards_count:
+          type: integer
+          example: 32
     UserInfo:
       type: object
       properties:
