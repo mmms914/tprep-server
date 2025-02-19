@@ -3,7 +3,6 @@ package controller
 import (
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
-	"go.mongodb.org/mongo-driver/v2/bson"
 	"main/domain"
 	"net/http"
 	"strconv"
@@ -164,18 +163,15 @@ func (cc *CollectionController) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (cc *CollectionController) Search(w http.ResponseWriter, r *http.Request) {
+	var collections []domain.Collection
+	var collectionsPreview []domain.CollectionPreview
+	var err error
+
 	queryParams := r.URL.Query()
-	filter := bson.D{{Key: "is_public", Value: true}}
 	name := queryParams.Get("name")
-	if name != "" {
-		filter = append(filter, bson.D{
-			{"name", bson.D{
-				{"$regex", ".*" + name + ".*"},
-				{"$options", "i"},
-			}},
-		}...)
-	}
-	collections, err := cc.CollectionUseCase.FindByFilter(r.Context(), filter)
+
+	collections, err = cc.CollectionUseCase.SearchPublic(r.Context(), name)
+
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
 		return
@@ -186,9 +182,18 @@ func (cc *CollectionController) Search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	for _, c := range collections {
+		collectionsPreview = append(collectionsPreview, domain.CollectionPreview{
+			ID:         c.ID,
+			Name:       c.Name,
+			IsPublic:   c.IsPublic,
+			CardsCount: len(c.Cards),
+		})
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(collections)
+	json.NewEncoder(w).Encode(collectionsPreview)
 }
 
 func (cc *CollectionController) CreateCard(w http.ResponseWriter, r *http.Request) {

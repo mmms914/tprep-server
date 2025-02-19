@@ -61,10 +61,37 @@ func (cu *collectionUseCase) GetByID(c context.Context, collectionID string) (do
 	return cu.collectionRepository.GetByID(ctx, collectionID)
 }
 
-func (cu *collectionUseCase) FindByFilter(c context.Context, filter interface{}) ([]domain.Collection, error) {
+func (cu *collectionUseCase) SearchPublic(c context.Context, text string) ([]domain.Collection, error) {
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
-	return cu.collectionRepository.GetByFilter(ctx, filter)
+
+	var filter interface{}
+	if text == "" {
+		filter = bson.M{
+			"is_public": true,
+		}
+	} else {
+		filter = bson.M{
+			"is_public": true,
+			"$text": bson.M{
+				"$search": text,
+			},
+		}
+	}
+
+	collections, err := cu.collectionRepository.GetByFilter(ctx, filter)
+	if err == nil && len(collections) == 0 {
+		filter = bson.M{
+			"is_public": true,
+			"name": bson.Regex{
+				Pattern: ".*" + text + ".*",
+				Options: "i",
+			},
+		}
+		return cu.collectionRepository.GetByFilter(ctx, filter)
+	}
+
+	return collections, err
 }
 
 func (cu *collectionUseCase) AddCard(c context.Context, collectionID string, card *domain.Card) (domain.Card, error) {

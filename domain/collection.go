@@ -25,6 +25,13 @@ type CollectionInfo struct {
 	Cards    []Card `bson:"cards" json:"cards"`
 }
 
+type CollectionPreview struct {
+	ID         string `bson:"_id" json:"id"`
+	Name       string `bson:"name" json:"name"`
+	IsPublic   bool   `bson:"is_public" json:"is_public"`
+	CardsCount int    `json:"cards_count"`
+}
+
 type CollectionRepository interface {
 	Create(c context.Context, collection *Collection) (string, error)
 	Update(c context.Context, filter interface{}, update interface{}) (database.UpdateResult, error)
@@ -39,7 +46,7 @@ type CollectionUseCase interface {
 	PutByID(c context.Context, collectionID string, collection *Collection) error
 	DeleteByID(c context.Context, collectionID string) error
 	GetByID(c context.Context, collectionID string) (Collection, error)
-	FindByFilter(c context.Context, filter interface{}) ([]Collection, error)
+	SearchPublic(c context.Context, text string) ([]Collection, error)
 
 	AddCard(c context.Context, collectionID string, card *Card) (Card, error)
 	DeleteCard(c context.Context, collectionID string, cardLocalID int) error
