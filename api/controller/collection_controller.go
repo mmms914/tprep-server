@@ -3,6 +3,7 @@ package controller
 import (
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
+	"go.mongodb.org/mongo-driver/v2/bson"
 	"main/domain"
 	"net/http"
 	"strconv"
@@ -160,6 +161,34 @@ func (cc *CollectionController) Delete(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(domain.SuccessResponse{
 		Message: "Collection deleted successfully",
 	})
+}
+
+func (cc *CollectionController) Search(w http.ResponseWriter, r *http.Request) {
+	queryParams := r.URL.Query()
+	filter := bson.D{{Key: "is_public", Value: true}}
+	name := queryParams.Get("name")
+	if name != "" {
+		filter = append(filter, bson.D{
+			{"name", bson.D{
+				{"$regex", ".*" + name + ".*"},
+				{"$options", "i"},
+			}},
+		}...)
+	}
+	collections, err := cc.CollectionUseCase.FindByFilter(r.Context(), filter)
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	if len(collections) == 0 {
+		http.Error(w, "Сouldn't find anything", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(collections)
 }
 
 func (cc *CollectionController) CreateCard(w http.ResponseWriter, r *http.Request) {

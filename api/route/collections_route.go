@@ -22,6 +22,7 @@ func NewCollectionRouter(env *bootstrap.Env, timeout time.Duration, db database.
 	}
 	r.Route("/collection", func(r chi.Router) {
 		r.Post("/", cc.Create)
+		r.Get("/search", cc.Search)
 		r.Route("/{id}", func(r chi.Router) {
 			r.Get("/", cc.Get)
 			r.Put("/", cc.Update)
