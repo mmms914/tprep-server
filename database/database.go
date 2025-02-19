@@ -14,7 +14,7 @@ type Database interface {
 
 type Collection interface {
 	FindOne(context.Context, interface{}) SingleResult
-	Find(context.Context, interface{}, ...*options.FindOptions) (Cursor, error)
+	Find(context.Context, interface{}, ...options.Lister[options.FindOptions]) (Cursor, error)
 	InsertOne(context.Context, interface{}) (string, error)
 	DeleteOne(context.Context, interface{}) (int64, error)
 	UpdateOne(context.Context, interface{}, interface{}, ...options.Lister[options.UpdateOptions]) (UpdateResult, error)
@@ -28,6 +28,11 @@ type SingleResult interface {
 type UpdateResult struct {
 	MatchedCount  int64
 	ModifiedCount int64
+}
+
+type FindOptions struct {
+	Limit int64
+	Skip  int64
 }
 
 type Cursor interface {
@@ -85,8 +90,8 @@ func (mc *mongoCollection) FindOne(ctx context.Context, filter interface{}) Sing
 	return &mongoSingleResult{sr: singleResult}
 }
 
-func (mc *mongoCollection) Find(ctx context.Context, filter interface{}, opts ...*options.FindOptions) (Cursor, error) {
-	cursor, err := mc.coll.Find(ctx, filter)
+func (mc *mongoCollection) Find(ctx context.Context, filter interface{}, opts ...options.Lister[options.FindOptions]) (Cursor, error) {
+	cursor, err := mc.coll.Find(ctx, filter, opts[:]...)
 	return cursor, err
 }
 

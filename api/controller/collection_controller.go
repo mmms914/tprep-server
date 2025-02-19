@@ -164,13 +164,23 @@ func (cc *CollectionController) Delete(w http.ResponseWriter, r *http.Request) {
 
 func (cc *CollectionController) Search(w http.ResponseWriter, r *http.Request) {
 	var collections []domain.Collection
-	var collectionsPreview []domain.CollectionPreview
+	var result domain.CollectionPreviewArray
 	var err error
 
 	queryParams := r.URL.Query()
 	name := queryParams.Get("name")
+	count, err := strconv.Atoi(queryParams.Get("count"))
+	if err != nil || count < 1 || count > 100 {
+		http.Error(w, jsonError("Invalid count"), http.StatusBadRequest)
+		return
+	}
+	offset, err := strconv.Atoi(queryParams.Get("offset"))
+	if err != nil || offset < 0 {
+		http.Error(w, jsonError("Invalid offset"), http.StatusBadRequest)
+		return
+	}
 
-	collections, err = cc.CollectionUseCase.SearchPublic(r.Context(), name)
+	collections, err = cc.CollectionUseCase.SearchPublic(r.Context(), name, count, offset)
 
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
@@ -182,18 +192,21 @@ func (cc *CollectionController) Search(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cnt := 0
 	for _, c := range collections {
-		collectionsPreview = append(collectionsPreview, domain.CollectionPreview{
+		result.Items = append(result.Items, domain.CollectionPreview{
 			ID:         c.ID,
 			Name:       c.Name,
 			IsPublic:   c.IsPublic,
 			CardsCount: len(c.Cards),
 		})
+		cnt++
 	}
+	result.Count = cnt
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(collectionsPreview)
+	json.NewEncoder(w).Encode(result)
 }
 
 func (cc *CollectionController) CreateCard(w http.ResponseWriter, r *http.Request) {

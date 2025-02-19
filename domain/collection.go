@@ -32,13 +32,18 @@ type CollectionPreview struct {
 	CardsCount int    `json:"cards_count"`
 }
 
+type CollectionPreviewArray struct {
+	Count int                 `json:"count"`
+	Items []CollectionPreview `json:"items"`
+}
+
 type CollectionRepository interface {
 	Create(c context.Context, collection *Collection) (string, error)
 	Update(c context.Context, filter interface{}, update interface{}) (database.UpdateResult, error)
 	UpdateByID(c context.Context, collectionID string, update interface{}) (database.UpdateResult, error)
 	DeleteByID(c context.Context, collectionID string) error
 	GetByID(c context.Context, collectionID string) (Collection, error)
-	GetByFilter(c context.Context, filter interface{}) ([]Collection, error)
+	GetByFilter(c context.Context, filter interface{}, opts database.FindOptions) ([]Collection, error)
 }
 
 type CollectionUseCase interface {
@@ -46,7 +51,7 @@ type CollectionUseCase interface {
 	PutByID(c context.Context, collectionID string, collection *Collection) error
 	DeleteByID(c context.Context, collectionID string) error
 	GetByID(c context.Context, collectionID string) (Collection, error)
-	SearchPublic(c context.Context, text string) ([]Collection, error)
+	SearchPublic(c context.Context, text string, count int, offset int) ([]Collection, error)
 
 	AddCard(c context.Context, collectionID string, card *Card) (Card, error)
 	DeleteCard(c context.Context, collectionID string, cardLocalID int) error

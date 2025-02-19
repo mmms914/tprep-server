@@ -624,19 +624,39 @@ paths:
           - name: name
             in: query
             required: false
-            description: если параметр не задан, возвращаются все публичные колоды
+            description: если параметр не задан, возвращаются просто публичные колоды
             schema:
               type: string
               example: математика 5 класс
+          - name: count
+            in: query
+            required: true
+            description: количество элементов (от 1 до 100)
+            schema:
+              type: integer
+              example: 10
+          - name: offset
+            in: query
+            required: true
+            description: пропуск определенного числа найденных элементов (от 0)
+            schema:
+              type: integer
+              example: 30
       responses:
         '200':
-          description: поиск прошел успешно, возвращается массив с превью колод
+          description: поиск прошел успешно, возвращается массив с превью колод; полученный count может быть меньше переданного count
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/CollectionPreview"
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    example: 1
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CollectionPreview"
         '401':
           description: токен недействителен
           content:
@@ -647,6 +667,16 @@ paths:
                   message:
                     type: string
                     example: Not authorized
+        '400':
+          description: недопустимые данные
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invalid count
                 
         '404':
           description: коллекции по данному запросу не были найдены

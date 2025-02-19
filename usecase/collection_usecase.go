@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"go.mongodb.org/mongo-driver/v2/bson"
+	"main/database"
 	"main/domain"
 	"time"
 )
@@ -61,7 +62,7 @@ func (cu *collectionUseCase) GetByID(c context.Context, collectionID string) (do
 	return cu.collectionRepository.GetByID(ctx, collectionID)
 }
 
-func (cu *collectionUseCase) SearchPublic(c context.Context, text string) ([]domain.Collection, error) {
+func (cu *collectionUseCase) SearchPublic(c context.Context, text string, count int, offset int) ([]domain.Collection, error) {
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
 
@@ -79,7 +80,12 @@ func (cu *collectionUseCase) SearchPublic(c context.Context, text string) ([]dom
 		}
 	}
 
-	collections, err := cu.collectionRepository.GetByFilter(ctx, filter)
+	opts := database.FindOptions{
+		Limit: int64(count),
+		Skip:  int64(offset),
+	}
+
+	collections, err := cu.collectionRepository.GetByFilter(ctx, filter, opts)
 	if err == nil && len(collections) == 0 {
 		filter = bson.M{
 			"is_public": true,
@@ -88,7 +94,7 @@ func (cu *collectionUseCase) SearchPublic(c context.Context, text string) ([]dom
 				Options: "i",
 			},
 		}
-		return cu.collectionRepository.GetByFilter(ctx, filter)
+		return cu.collectionRepository.GetByFilter(ctx, filter, opts)
 	}
 
 	return collections, err
