@@ -32,6 +32,8 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
+    networks:
+      - my_network
 
   grafana:
     image: grafana/grafana-oss:latest
@@ -39,6 +41,8 @@ services:
       - "13000:3000"
     volumes:
       - grafana-data:/var/lib/grafana
+    networks:
+      - my_network
 
 volumes:
   grafana-data:
