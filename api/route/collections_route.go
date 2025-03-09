@@ -7,13 +7,15 @@ import (
 	"main/database"
 	"main/domain"
 	"main/repository"
+	"main/storage"
 	"main/usecase"
 	"time"
 )
 
-func NewCollectionRouter(env *bootstrap.Env, timeout time.Duration, db database.Database, r chi.Router) {
+func NewCollectionRouter(env *bootstrap.Env, timeout time.Duration, db database.Database, s storage.Client, r chi.Router) {
 	ur := repository.NewUserRepository(db, domain.UserCollection)
-	uuc := usecase.NewUserUseCase(ur, timeout)
+	us := storage.NewUserStorage(s, domain.UserBucket)
+	uuc := usecase.NewUserUseCase(ur, us, timeout)
 
 	cr := repository.NewCollectionRepository(db, domain.CollectionCollection)
 	cc := &controller.CollectionController{

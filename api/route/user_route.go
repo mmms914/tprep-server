@@ -7,15 +7,24 @@ import (
 	"main/database"
 	"main/domain"
 	"main/repository"
+	"main/storage"
 	"main/usecase"
 	"time"
 )
 
-func NewUserRouter(env *bootstrap.Env, timeout time.Duration, db database.Database, r chi.Router) {
+func NewUserRouter(env *bootstrap.Env, timeout time.Duration, db database.Database, s storage.Client, r chi.Router) {
 	ur := repository.NewUserRepository(db, domain.UserCollection)
+	us := storage.NewUserStorage(s, domain.UserBucket)
 	uc := &controller.UserController{
-		UserUseCase: usecase.NewUserUseCase(ur, timeout),
+		UserUseCase: usecase.NewUserUseCase(ur, us, timeout),
 	}
-	r.Get("/user", uc.Get)
-	r.Put("/user", uc.Update)
+	r.Route("/user", func(r chi.Router) {
+		r.Get("/", uc.Get)
+		r.Put("/", uc.Update)
+		r.Route("/picture", func(r chi.Router) {
+			r.Get("/", uc.GetProfilePicture)
+			r.Put("/", uc.UploadProfilePicture)
+			r.Delete("/", uc.RemoveProfilePicture)
+		})
+	})
 }

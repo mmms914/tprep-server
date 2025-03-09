@@ -10,8 +10,7 @@ services:
       - ${PORT}:${PORT}
     depends_on:
       - mongo
-      - prometheus
-      - grafana
+      - minio
     networks:
       - my_network
 
@@ -36,6 +35,8 @@ services:
       - "9090:9090"
     networks:
       - my_network
+    depends_on:
+      - tprep-server
 
   grafana:
     image: grafana/grafana-oss:latest
@@ -44,6 +45,22 @@ services:
       - "13000:3000"
     volumes:
       - grafana-data:/var/lib/grafana
+    networks:
+      - my_network
+    depends_on:
+      - tprep-server
+      - prometheus
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    command: minio server /data
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - ${MINIO_PORT}:${MINIO_PORT}
+      - "9001:9001"
+    volumes:
+      - ../minio:/data
     networks:
       - my_network
 

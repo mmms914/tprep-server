@@ -6,11 +6,12 @@ import (
 	"main/api/middleware"
 	"main/bootstrap"
 	"main/database"
+	"main/storage"
 	"net/http"
 	"time"
 )
 
-func Setup(env *bootstrap.Env, timeout time.Duration, db database.Database, r *chi.Mux) {
+func Setup(env *bootstrap.Env, timeout time.Duration, db database.Database, s storage.Client, r *chi.Mux) {
 	r.Use(middleware.LoggingMiddleware)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.CORSHandler)
@@ -27,8 +28,8 @@ func Setup(env *bootstrap.Env, timeout time.Duration, db database.Database, r *c
 	// private methods
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.JwtAuthMiddleware(env.AccessTokenSecret))
-		NewCollectionRouter(env, timeout, db, r)
-		NewUserRouter(env, timeout, db, r)
+		NewCollectionRouter(env, timeout, db, s, r)
+		NewUserRouter(env, timeout, db, s, r)
 		NewGlobalRouter(env, timeout, r)
 	})
 }
