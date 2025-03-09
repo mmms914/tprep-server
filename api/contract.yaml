@@ -467,7 +467,7 @@ paths:
       tags:
         - user
       summary: Получение информации о текущем пользователе
-      description: ''
+      description: Доступно только авторизованным пользователям
       operationId: getUserInfo
       responses:
         '200':
@@ -548,6 +548,125 @@ paths:
                     message:
                       type: string
                       example: Not authorized
+      security:
+        - bearerAuth: []
+  /user/picture:
+    get:
+      tags:
+        - user
+      summary: Получение текущей аватарки
+      description: Доступно только авторизованным пользователям
+      operationId: getUserPicture
+      responses:
+        '200':
+          description: успешная операция
+          content:
+            image/jpeg:
+              schema:
+                example: бинарные данные
+                
+        '404':
+            description: аватарка пользователя не установлена
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: "User picture not found"
+        '401':
+            description: пользователь не найден
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Not authorized
+        
+      security:
+        - bearerAuth: []
+    put:
+      tags:
+        - user
+      summary: Загрузка аватарки на сервер
+      description: Доступно только авторизованным пользователям; размер изображения не может превышать 5 МБ; устанавливает has_picture пользователя на true
+      operationId: updateUserPicture
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+              
+      responses:
+        '200':
+            description: аватарка успешно загружена
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Picture uploaded successfully
+        '400':
+          description: недопустимые данные
+          content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Error with file or its max size
+        '401':
+            description: токен недействителен
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Not authorized
+      security:
+        - bearerAuth: []
+    delete:
+      tags:
+        - user
+      summary: Удаление аватарки с сервера
+      description: Доступно только авторизованным пользователям; устанавливает has_picture пользователя на false
+      operationId: deleteUserPicture
+              
+      responses:
+        '200':
+            description: аватарка успешно удалена / аватарки и не было на сервере, короче точно больше не хранится
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Profile picture deleted
+        '401':
+            description: токен недействителен
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Not authorized
+      security:
+        - bearerAuth: []
   /collection:
     post:
       tags:
@@ -938,6 +1057,9 @@ components:
         email:
           type: string
           example: 123@mail.ru
+        has_picture:
+          type: boolean
+          example: false
         collections:
           type: array
           items:
