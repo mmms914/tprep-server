@@ -15,7 +15,7 @@ type User struct {
 	Username    string   `bson:"username" json:"username"`
 	Email       string   `bson:"email" json:"email"`
 	Password    string   `bson:"password" json:"password"`
-	HavePicture bool     `bson:"have_picture" json:"have_picture"`
+	HasPicture  bool     `bson:"has_picture" json:"has_picture"`
 	Collections []string `bson:"collections" json:"collections"`
 }
 
@@ -23,7 +23,7 @@ type UserInfo struct {
 	ID          string   `bson:"_id" json:"id"`
 	Username    string   `bson:"username" json:"username"`
 	Email       string   `bson:"email" json:"email"`
-	HavePicture bool     `bson:"have_picture" json:"have_picture"`
+	HasPicture  bool     `bson:"has_picture" json:"has_picture"`
 	Collections []string `bson:"collections" json:"collections"`
 }
 
