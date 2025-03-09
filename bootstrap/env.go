@@ -15,12 +15,12 @@ type Env struct {
 	DBName         string `mapstructure:"DB_NAME"`
 	DBPort         int    `mapstructure:"DB_PORT"`
 
-	MinioPort      int    `mapstructure:"MINIO_PORT"`
-	MongoDir       string `mapstructure:"MONGO_DIR"`
-	LocalMinioURI  string `mapstructure:"LOCAL_MINIO_URI"`
-	DockerMinioURI string `mapstructure:"DOCKER_MINIO_URI"`
-	MinioAccessKey string `mapstructure:"MINIO_ACCESS_KEY"`
-	MinioSecretKey string `mapstructure:"MINIO_SECRET_KEY"`
+	MinioPort         int    `mapstructure:"MINIO_PORT"`
+	MongoDir          string `mapstructure:"MONGO_DIR"`
+	LocalMinioURI     string `mapstructure:"LOCAL_MINIO_URI"`
+	DockerMinioURI    string `mapstructure:"DOCKER_MINIO_URI"`
+	MinioRootUser     string `mapstructure:"MINIO_ROOT_USER"`
+	MinioRootPassword string `mapstructure:"MINIO_ROOT_PASSWORD"`
 
 	ContextTimeout         int    `mapstructure:"CONTEXT_TIMEOUT"`
 	AccessTokenSecret      string `mapstructure:"ACCESS_TOKEN_SECRET"`

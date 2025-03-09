@@ -20,8 +20,8 @@ func NewStorage(env *Env) storage.Client {
 		endpoint = env.DockerMinioURI
 	}
 
-	accessKeyID := env.MinioAccessKey
-	secretAccessKey := env.MinioSecretKey
+	accessKeyID := env.MinioRootUser
+	secretAccessKey := env.MinioRootPassword
 	useSSL := false
 
 	options := storage.Options{

@@ -53,7 +53,7 @@ services:
   minio:
     image: minio/minio:latest
     container_name: minio
-    command: minio server /data
+    command: minio server /data --console-address ":9001"
     restart: unless-stopped
     env_file: .env
     ports:
