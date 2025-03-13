@@ -15,8 +15,12 @@ import (
 func NewUserRouter(env *bootstrap.Env, timeout time.Duration, db database.Database, s storage.Client, r chi.Router) {
 	ur := repository.NewUserRepository(db, domain.UserCollection)
 	us := storage.NewUserStorage(s, domain.UserBucket)
+
+	cr := repository.NewCollectionRepository(db, domain.CollectionCollection)
+
 	uc := &controller.UserController{
-		UserUseCase: usecase.NewUserUseCase(ur, us, timeout),
+		UserUseCase:       usecase.NewUserUseCase(ur, us, timeout),
+		CollectionUseCase: usecase.NewCollectionUseCase(cr, timeout),
 	}
 	r.Route("/user", func(r chi.Router) {
 		r.Get("/", uc.Get)

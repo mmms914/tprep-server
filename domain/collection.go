@@ -52,6 +52,7 @@ type CollectionUseCase interface {
 	DeleteByID(c context.Context, collectionID string) error
 	GetByID(c context.Context, collectionID string) (Collection, error)
 	SearchPublic(c context.Context, text string, count int, offset int) ([]Collection, error)
+	SearchPublicByAuthor(c context.Context, author string) ([]Collection, error)
 
 	AddCard(c context.Context, collectionID string, card *Card) (Card, error)
 	DeleteCard(c context.Context, collectionID string, cardLocalID int) error

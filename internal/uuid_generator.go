@@ -12,3 +12,7 @@ func GenerateUUID() string {
 	}
 	return gen.String()
 }
+
+func ValidateUUID(id string) error {
+	return uuid.Validate(id)
+}

@@ -3,33 +3,66 @@ package controller
 import (
 	"encoding/json"
 	"main/domain"
+	"main/internal"
 	"net/http"
 	"strings"
 )
 
 type UserController struct {
-	UserUseCase domain.UserUseCase
+	UserUseCase       domain.UserUseCase
+	CollectionUseCase domain.CollectionUseCase
 }
 
 func (uc *UserController) Get(w http.ResponseWriter, r *http.Request) {
-	id := r.Context().Value("x-user-id").(string)
+	authId := r.Context().Value("x-user-id").(string)
 
-	user, err := uc.UserUseCase.GetByID(r.Context(), id)
-	if err != nil {
-		http.Error(w, jsonError(err.Error()), http.StatusNotFound)
+	queryParams := r.URL.Query()
+	id := queryParams.Get("id")
+
+	if id == "" { // получение своего профиля
+		user, err := uc.UserUseCase.GetByID(r.Context(), authId)
+		if err != nil {
+			http.Error(w, jsonError(err.Error()), http.StatusNotFound)
+			return
+		}
+
+		userInfo := domain.UserInfo{
+			ID:          user.ID,
+			Username:    user.Username,
+			Email:       user.Email,
+			HasPicture:  user.HasPicture,
+			Collections: user.Collections,
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(userInfo)
+	} else if internal.ValidateUUID(id) != nil {
+		http.Error(w, jsonError("Invalid id"), http.StatusBadRequest)
 		return
-	}
+	} else { // получение чужого профиля
+		user, err := uc.UserUseCase.GetByID(r.Context(), id)
+		if err != nil {
+			http.Error(w, jsonError(err.Error()), http.StatusNotFound)
+			return
+		}
 
-	userInfo := domain.UserInfo{
-		ID:          user.ID,
-		Username:    user.Username,
-		Email:       user.Email,
-		Collections: user.Collections,
-	}
+		var publicCollections []string
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(userInfo)
+		collections, err := uc.CollectionUseCase.SearchPublicByAuthor(r.Context(), id)
+		for _, coll := range collections {
+			publicCollections = append(publicCollections, coll.ID)
+		}
+
+		publicUserInfo := domain.PublicUserInfo{
+			ID:                user.ID,
+			Username:          user.Username,
+			HasPicture:        user.HasPicture,
+			PublicCollections: publicCollections,
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(publicUserInfo)
+	}
 }
 
 func (uc *UserController) Update(w http.ResponseWriter, r *http.Request) {
@@ -60,7 +93,18 @@ func (uc *UserController) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (uc *UserController) GetProfilePicture(w http.ResponseWriter, r *http.Request) {
-	id := r.Context().Value("x-user-id").(string)
+	authId := r.Context().Value("x-user-id").(string)
+
+	queryParams := r.URL.Query()
+	id := queryParams.Get("id")
+
+	if id == "" {
+		id = authId // получим свою аватарку
+	} else if internal.ValidateUUID(id) != nil {
+		http.Error(w, jsonError("Invalid id"), http.StatusBadRequest)
+		return
+	}
+
 	fileBytes, err := uc.UserUseCase.GetProfilePicture(r.Context(), id)
 	if err != nil {
 		http.Error(w, jsonError("User picture not found"), http.StatusNotFound)

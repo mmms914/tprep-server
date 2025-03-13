@@ -27,6 +27,13 @@ type UserInfo struct {
 	Collections []string `bson:"collections" json:"collections"`
 }
 
+type PublicUserInfo struct {
+	ID                string   `bson:"_id" json:"id"`
+	Username          string   `bson:"username" json:"username"`
+	HasPicture        bool     `bson:"has_picture" json:"has_picture"`
+	PublicCollections []string `bson:"collections" json:"collections"`
+}
+
 type UserRepository interface {
 	Create(c context.Context, user *User) (string, error)
 	Update(c context.Context, filter interface{}, update interface{}) error

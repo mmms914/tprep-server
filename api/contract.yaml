@@ -466,16 +466,23 @@ paths:
     get:
       tags:
         - user
-      summary: Получение информации о текущем пользователе
-      description: Доступно только авторизованным пользователям
+      summary: Получение информации о пользователе
+      description: Доступно только авторизованным пользователям. Для текущего пользователя отображается вся информация, для чужого - email отсутствует, в поле collections только публичные колоды
       operationId: getUserInfo
+      parameters:
+          - name: id
+            in: query
+            description: id пользователя, информацию о котором необходимо получить; если не указано, возвращается информация о текущем пользователе
+            required: false
+            schema:
+              type: string
       responses:
         '200':
           description: успешная операция
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserInfo"   
+                $ref: "#/components/schemas/UserInfo"
         '404':
             description: пользователь не найден
             content:
@@ -554,9 +561,16 @@ paths:
     get:
       tags:
         - user
-      summary: Получение текущей аватарки
+      summary: Получение аватарки пользователя
       description: Доступно только авторизованным пользователям
       operationId: getUserPicture
+      parameters:
+        - name: id
+          in: query
+          description: id пользователя, аватарку которого необходимо получить; если не задано, возвращается аватарка текущего пользователя
+          required: false
+          schema:
+            type: string
       responses:
         '200':
           description: успешная операция
@@ -1057,6 +1071,27 @@ components:
         email:
           type: string
           example: 123@mail.ru
+        has_picture:
+          type: boolean
+          example: false
+        collections:
+          type: array
+          items:
+            type: string
+          example: [
+        "ceb80d45-81ae-47b7-bfaf-c396bcd773fe",
+        "acac1c7d-444f-4a88-ba90-a535aa73bc4c",
+        "bd134d4a-f6f0-4df6-8f34-0340766eb5cb"
+        ]
+    PublicUserInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 9522ba7f-113c-4992-9032-7747f0c5a59d
+        username:
+          type: string
+          example: theUser
         has_picture:
           type: boolean
           example: false

@@ -100,6 +100,21 @@ func (cu *collectionUseCase) SearchPublic(c context.Context, text string, count 
 	return collections, err
 }
 
+func (cu *collectionUseCase) SearchPublicByAuthor(c context.Context, author string) ([]domain.Collection, error) {
+	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
+	defer cancel()
+
+	var filter interface{}
+	filter = bson.M{
+		"author":    author,
+		"is_public": true,
+	}
+
+	collections, err := cu.collectionRepository.GetByFilter(ctx, filter, database.FindOptions{})
+
+	return collections, err
+}
+
 func (cu *collectionUseCase) AddCard(c context.Context, collectionID string, card *domain.Card) (domain.Card, error) {
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
