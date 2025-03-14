@@ -53,6 +53,7 @@ func (cc *CollectionController) Create(w http.ResponseWriter, r *http.Request) {
 		Name:     collection.Name,
 		IsPublic: collection.IsPublic,
 		Cards:    collection.Cards,
+		Author:   collection.Author,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -120,6 +121,7 @@ func (cc *CollectionController) Get(w http.ResponseWriter, r *http.Request) {
 		Name:     collection.Name,
 		IsPublic: collection.IsPublic,
 		Cards:    collection.Cards,
+		Author:   collection.Author,
 	}
 
 	w.Header().Set("Content-Type", "application/json")

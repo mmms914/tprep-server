@@ -23,6 +23,7 @@ type CollectionInfo struct {
 	Name     string `bson:"name" json:"name"`
 	IsPublic bool   `bson:"is_public" json:"is_public"`
 	Cards    []Card `bson:"cards" json:"cards"`
+	Author   string `bson:"author" json:"author"`
 }
 
 type CollectionPreview struct {
