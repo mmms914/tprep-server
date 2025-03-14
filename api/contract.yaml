@@ -1028,6 +1028,9 @@ components:
         is_public:
           type: boolean
           example: false
+        author:
+          type: string
+          example: 9522ba7f-113c-4992-9032-7747f0c5a59d
         cards:
           type: array
           items: 
