@@ -11,27 +11,30 @@ const (
 )
 
 type User struct {
-	ID          string   `bson:"_id" json:"id"`
-	Username    string   `bson:"username" json:"username"`
-	Email       string   `bson:"email" json:"email"`
-	Password    string   `bson:"password" json:"password"`
-	HasPicture  bool     `bson:"has_picture" json:"has_picture"`
-	Collections []string `bson:"collections" json:"collections"`
+	ID          string         `bson:"_id" json:"id"`
+	Username    string         `bson:"username" json:"username"`
+	Email       string         `bson:"email" json:"email"`
+	Password    string         `bson:"password" json:"password"`
+	HasPicture  bool           `bson:"has_picture" json:"has_picture"`
+	Collections []string       `bson:"collections" json:"collections"`
+	Statistics  UserStatistics `bson:"statistics" json:"statistics"`
 }
 
 type UserInfo struct {
-	ID          string   `bson:"_id" json:"id"`
-	Username    string   `bson:"username" json:"username"`
-	Email       string   `bson:"email" json:"email"`
-	HasPicture  bool     `bson:"has_picture" json:"has_picture"`
-	Collections []string `bson:"collections" json:"collections"`
+	ID          string         `bson:"_id" json:"id"`
+	Username    string         `bson:"username" json:"username"`
+	Email       string         `bson:"email" json:"email"`
+	HasPicture  bool           `bson:"has_picture" json:"has_picture"`
+	Collections []string       `bson:"collections" json:"collections"`
+	Statistics  UserStatistics `bson:"statistics" json:"statistics"`
 }
 
 type PublicUserInfo struct {
-	ID                string   `bson:"_id" json:"id"`
-	Username          string   `bson:"username" json:"username"`
-	HasPicture        bool     `bson:"has_picture" json:"has_picture"`
-	PublicCollections []string `bson:"collections" json:"collections"`
+	ID                string         `bson:"_id" json:"id"`
+	Username          string         `bson:"username" json:"username"`
+	HasPicture        bool           `bson:"has_picture" json:"has_picture"`
+	PublicCollections []string       `bson:"collections" json:"collections"`
+	Statistics        UserStatistics `bson:"statistics" json:"statistics"`
 }
 
 type UserRepository interface {

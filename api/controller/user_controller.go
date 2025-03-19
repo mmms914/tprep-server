@@ -32,6 +32,7 @@ func (uc *UserController) Get(w http.ResponseWriter, r *http.Request) {
 			Email:       user.Email,
 			HasPicture:  user.HasPicture,
 			Collections: user.Collections,
+			Statistics:  user.Statistics,
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -58,6 +59,7 @@ func (uc *UserController) Get(w http.ResponseWriter, r *http.Request) {
 			Username:          user.Username,
 			HasPicture:        user.HasPicture,
 			PublicCollections: publicCollections,
+			Statistics:        user.Statistics,
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
