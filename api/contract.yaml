@@ -865,7 +865,7 @@ paths:
       tags:
         - collection
       summary: Добавление новой тренировки в историю
-      description: Доступно только авторизованным пользователям
+      description: Доступно только авторизованным пользователям. Поле all_cards_count - количество карт во всей колоде, даже если эти карты не были пройдены. Поле blank_answer присутствует с любым значением, даже если тип вопроса не input
       operationId: updateUserHistory
       requestBody:
         $ref: '#/components/requestBodies/HistoryItemRequest'
