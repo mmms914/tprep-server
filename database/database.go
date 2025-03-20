@@ -123,6 +123,10 @@ func (mc *mongoCollection) ReplaceOne(ctx context.Context, filter interface{}, u
 
 func (mc *mongoCollection) InsertOne(ctx context.Context, document interface{}) (string, error) {
 	id, err := mc.coll.InsertOne(ctx, document)
+
+	if id == nil {
+		return "", err
+	}
 	return id.InsertedID.(string), err
 }
 

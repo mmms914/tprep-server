@@ -15,12 +15,15 @@ import (
 func NewCollectionRouter(env *bootstrap.Env, timeout time.Duration, db database.Database, s storage.Client, r chi.Router) {
 	ur := repository.NewUserRepository(db, domain.UserCollection)
 	us := storage.NewUserStorage(s, domain.UserBucket)
-	uuc := usecase.NewUserUseCase(ur, us, timeout)
+
+	uhr := repository.NewUserHistoryRepository(db, domain.UserHistoryCollection)
+	chr := repository.NewCollectionHistoryRepository(db, domain.CollectionHistoryCollection)
 
 	cr := repository.NewCollectionRepository(db, domain.CollectionCollection)
 	cc := &controller.CollectionController{
 		CollectionUseCase: usecase.NewCollectionUseCase(cr, timeout),
-		UserUseCase:       uuc,
+		UserUseCase:       usecase.NewUserUseCase(ur, us, timeout),
+		HistoryUseCase:    usecase.NewHistoryUseCase(uhr, chr, ur, timeout),
 	}
 	r.Route("/collection", func(r chi.Router) {
 		r.Post("/", cc.Create)
@@ -36,6 +39,9 @@ func NewCollectionRouter(env *bootstrap.Env, timeout time.Duration, db database.
 					r.Delete("/", cc.DeleteCard)
 				})
 			})
+		})
+		r.Route("/training", func(r chi.Router) {
+			r.Post("/", cc.AddTraining)
 		})
 	})
 }

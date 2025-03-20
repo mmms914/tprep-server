@@ -16,11 +16,15 @@ func NewUserRouter(env *bootstrap.Env, timeout time.Duration, db database.Databa
 	ur := repository.NewUserRepository(db, domain.UserCollection)
 	us := storage.NewUserStorage(s, domain.UserBucket)
 
+	uhr := repository.NewUserHistoryRepository(db, domain.UserHistoryCollection)
+	chr := repository.NewCollectionHistoryRepository(db, domain.CollectionHistoryCollection)
+
 	cr := repository.NewCollectionRepository(db, domain.CollectionCollection)
 
 	uc := &controller.UserController{
 		UserUseCase:       usecase.NewUserUseCase(ur, us, timeout),
 		CollectionUseCase: usecase.NewCollectionUseCase(cr, timeout),
+		HistoryUseCase:    usecase.NewHistoryUseCase(uhr, chr, ur, timeout),
 	}
 	r.Route("/user", func(r chi.Router) {
 		r.Get("/", uc.Get)
@@ -29,6 +33,9 @@ func NewUserRouter(env *bootstrap.Env, timeout time.Duration, db database.Databa
 			r.Get("/", uc.GetProfilePicture)
 			r.Put("/", uc.UploadProfilePicture)
 			r.Delete("/", uc.RemoveProfilePicture)
+		})
+		r.Route("/history", func(r chi.Router) {
+			r.Get("/", uc.GetHistory)
 		})
 	})
 }

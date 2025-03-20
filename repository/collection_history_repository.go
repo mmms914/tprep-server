@@ -2,7 +2,9 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 	"main/database"
 	"main/domain"
 )
@@ -23,17 +25,18 @@ func (chr *collectionHistoryRepository) CreateIfNotExists(c context.Context, col
 	collection := chr.database.Collection(chr.collection)
 
 	var collectionHistory domain.CollectionHistory
-	filter := bson.M{"collection_id": collectionID}
+	filter := bson.M{"_id": collectionID}
 
-	if collection.FindOne(c, filter).Decode(&collectionHistory) != nil {
-		collectionHistory = domain.CollectionHistory{
-			CollectionID: collectionID,
-			Items:        make([]domain.SmallHistoryItem, 0),
-		}
-		_, err := collection.InsertOne(c, collectionHistory)
-		if err != nil {
+	if err := collection.FindOne(c, filter).Decode(&collectionHistory); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			collectionHistory := domain.CollectionHistory{
+				CollectionID: collectionID,
+				Items:        make([]domain.SmallHistoryItem, 0),
+			}
+			_, err = collection.InsertOne(c, collectionHistory)
 			return err
 		}
+		return err
 	}
 	return nil
 }
@@ -45,7 +48,7 @@ func (chr *collectionHistoryRepository) UpdateByID(c context.Context, collection
 	}
 
 	collection := chr.database.Collection(chr.collection)
-	filter := bson.D{{Key: "collection_id", Value: collectionID}}
+	filter := bson.D{{Key: "_id", Value: collectionID}}
 	update := bson.D{
 		{"$push", bson.D{
 			{"items", item},

@@ -506,6 +506,7 @@ paths:
         
       security:
         - bearerAuth: []
+    
     put:
       tags:
         - user
@@ -681,6 +682,42 @@ paths:
                       example: Not authorized
       security:
         - bearerAuth: []
+  /user/history:
+    get:
+      tags:
+        - user
+      summary: Получение истории тренировок текущего пользователя
+      description: Доступно только авторизованным пользователям
+      operationId: getUserHistory
+      responses:
+        '200':
+          description: успешная операция
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_id:
+                    type: string
+                    example: b3c337b6-171a-48cc-84ef-861398338f8c
+                  
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/HistoryItem"
+        '401':
+            description: токен недействителен
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Not authorized
+        
+      security:
+        - bearerAuth: []
   /collection:
     post:
       tags:
@@ -821,6 +858,39 @@ paths:
                   message:
                     type: string
                     example: Сouldn't find anything
+      security:
+        - bearerAuth: []
+  /collection/training:
+    post:
+      tags:
+        - collection
+      summary: Добавление новой тренировки в историю
+      description: Доступно только авторизованным пользователям
+      operationId: updateUserHistory
+      requestBody:
+        $ref: '#/components/requestBodies/HistoryItemRequest'
+      responses:
+        '201':
+          description: успешная операция
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: History item successfully added
+        '401':
+            description: токен недействителен
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Not authorized
+        
       security:
         - bearerAuth: []
   /collection/{id}:
@@ -1000,6 +1070,7 @@ paths:
                     example: Not authorized
       security:
         - bearerAuth: []
+  
 components:
   schemas:
     Card:
@@ -1015,6 +1086,57 @@ components:
         answer:
           type: string
           example: Cox-Zucker
+    HistoryItem:
+      type: object
+      properties:
+        collection_id:
+          type: string
+          example: ceb80d45-81ae-47b7-bfaf-c396bcd773fe
+        collection_name:
+          type: string
+          example: Математический анализ
+        time:
+          type: integer
+          example: 123123123
+        correct_cards:
+          type: array
+          items:
+            type: integer
+          example: [1, 22, 13, 5, 2]
+        incorrect_cards:
+          type: array
+          items:
+            type: integer
+          example: [55]
+        all_cards_count:
+          type: integer
+          example: 58
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorItem'
+    ErrorItem:
+      type: object
+      properties:
+        card_id:
+          type: integer
+          format: int64
+          example: 55
+        question:
+          type: string
+          example: How are you?
+        answer:
+          type: string
+          example: Fine
+        type:
+          type: string
+          example: choice
+        user_answer:
+          type: string
+          example: my input
+        blank_answer:
+          type: string
+          example: blank answer
     Collection:
       type: object
       description: в поле "cards" хранятся объекты карт
@@ -1086,6 +1208,15 @@ components:
         "acac1c7d-444f-4a88-ba90-a535aa73bc4c",
         "bd134d4a-f6f0-4df6-8f34-0340766eb5cb"
         ]
+        statistics: 
+          type: object
+          properties:
+            total_trainings:
+              type: integer
+              example: 32
+            medium_percentage:
+              type: integer
+              example: 99
     PublicUserInfo:
       type: object
       properties:
@@ -1107,6 +1238,15 @@ components:
         "acac1c7d-444f-4a88-ba90-a535aa73bc4c",
         "bd134d4a-f6f0-4df6-8f34-0340766eb5cb"
         ]
+        statistics: 
+          type: object
+          properties:
+            total_trainings:
+              type: integer
+              example: 32
+            medium_percentage:
+              type: integer
+              example: 99
   requestBodies:
     CardWithoutID:
       content:
@@ -1133,6 +1273,39 @@ components:
                 is_public:
                   type: boolean
                   example: true
+    HistoryItemRequest:
+      required: true
+      content:
+        application/json:
+            schema:
+              type: object
+              properties:
+                collection_id:
+                  type: string
+                  example: ceb80d45-81ae-47b7-bfaf-c396bcd773fe
+                collection_name:
+                  type: string
+                  example: Математический анализ
+                time:
+                  type: integer
+                  example: 123123123
+                correct_cards:
+                  type: array
+                  items:
+                    type: integer
+                  example: [1, 22, 13, 5, 2]
+                incorrect_cards:
+                  type: array
+                  items:
+                    type: integer
+                  example: [55]
+                all_cards_count:
+                  type: integer
+                  example: 58
+                errors:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ErrorItem'
   securitySchemes:
     bearerAuth:
       type: http

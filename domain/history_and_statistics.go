@@ -18,11 +18,11 @@ type HistoryItem struct {
 	Time           int         `bson:"time" json:"time"`
 	CorrectCards   []int       `bson:"correct_cards" json:"correct_cards"`
 	IncorrectCards []int       `bson:"incorrect_cards" json:"incorrect_cards"`
+	AllCardsCount  int         `bson:"all_cards_count" json:"all_cards_count"`
 	Errors         []ErrorItem `bson:"errors" json:"errors"`
 }
 
 type SmallHistoryItem struct {
-	CollectionId   string `bson:"collection_id" json:"collection_id"`
 	CollectionName string `bson:"collection_name" json:"collection_name"`
 	Time           int    `bson:"time" json:"time"`
 	CorrectCards   []int  `bson:"correct_cards" json:"correct_cards"`
@@ -39,12 +39,12 @@ type ErrorItem struct {
 }
 
 type UserHistory struct {
-	UserID string        `bson:"user_id" json:"user_id"`
+	UserID string        `bson:"_id" json:"user_id"`
 	Items  []HistoryItem `bson:"items" json:"items"`
 }
 
 type CollectionHistory struct {
-	CollectionID string             `bson:"collection_id" json:"collection_id"`
+	CollectionID string             `bson:"_id" json:"collection_id"`
 	Items        []SmallHistoryItem `bson:"items" json:"items"`
 }
 
@@ -55,7 +55,12 @@ type UserHistoryRepository interface {
 }
 
 type CollectionHistoryRepository interface {
-	CreateIfNotExists(c context.Context, userID string) (string, error)
+	CreateIfNotExists(c context.Context, collectionID string) error
 	UpdateByID(c context.Context, collectionID string, item SmallHistoryItem) error
 	GetByID(c context.Context, collectionID string) (CollectionHistory, error)
+}
+
+type HistoryUseCase interface {
+	GetUserHistory(c context.Context, userID string) (UserHistory, error)
+	AddTraining(c context.Context, userID string, historyItem HistoryItem) error
 }

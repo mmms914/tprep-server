@@ -11,6 +11,7 @@ import (
 type CollectionController struct {
 	CollectionUseCase domain.CollectionUseCase
 	UserUseCase       domain.UserUseCase
+	HistoryUseCase    domain.HistoryUseCase
 }
 
 func (cc *CollectionController) Create(w http.ResponseWriter, r *http.Request) {
@@ -324,5 +325,33 @@ func (cc *CollectionController) DeleteCard(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(domain.SuccessResponse{
 		Message: "Card deleted successfully",
+	})
+}
+
+func (cc *CollectionController) AddTraining(w http.ResponseWriter, r *http.Request) {
+	var historyItem domain.HistoryItem
+	userID := r.Context().Value("x-user-id").(string)
+
+	err := json.NewDecoder(r.Body).Decode(&historyItem)
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusBadRequest)
+		return
+	}
+
+	if historyItem.AllCardsCount == 0 || historyItem.CollectionName == "" || historyItem.CollectionID == "" || historyItem.AllCardsCount < len(historyItem.CorrectCards) {
+		http.Error(w, jsonError("Invalid body data. Check all_cards_count/collection_name/collection_id"), http.StatusBadRequest)
+		return
+	}
+
+	err = cc.HistoryUseCase.AddTraining(r.Context(), userID, historyItem)
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(domain.SuccessResponse{
+		Message: "History item successfully added",
 	})
 }

@@ -11,16 +11,17 @@ import (
 type UserController struct {
 	UserUseCase       domain.UserUseCase
 	CollectionUseCase domain.CollectionUseCase
+	HistoryUseCase    domain.HistoryUseCase
 }
 
 func (uc *UserController) Get(w http.ResponseWriter, r *http.Request) {
-	authId := r.Context().Value("x-user-id").(string)
+	authID := r.Context().Value("x-user-id").(string)
 
 	queryParams := r.URL.Query()
 	id := queryParams.Get("id")
 
 	if id == "" { // получение своего профиля
-		user, err := uc.UserUseCase.GetByID(r.Context(), authId)
+		user, err := uc.UserUseCase.GetByID(r.Context(), authID)
 		if err != nil {
 			http.Error(w, jsonError(err.Error()), http.StatusNotFound)
 			return
@@ -33,6 +34,9 @@ func (uc *UserController) Get(w http.ResponseWriter, r *http.Request) {
 			HasPicture:  user.HasPicture,
 			Collections: user.Collections,
 			Statistics:  user.Statistics,
+		}
+		if user.Collections == nil {
+			userInfo.Collections = make([]string, 0)
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -47,7 +51,7 @@ func (uc *UserController) Get(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		var publicCollections []string
+		publicCollections := make([]string, 0)
 
 		collections, err := uc.CollectionUseCase.SearchPublicByAuthor(r.Context(), id)
 		for _, coll := range collections {
@@ -95,13 +99,13 @@ func (uc *UserController) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (uc *UserController) GetProfilePicture(w http.ResponseWriter, r *http.Request) {
-	authId := r.Context().Value("x-user-id").(string)
+	authID := r.Context().Value("x-user-id").(string)
 
 	queryParams := r.URL.Query()
 	id := queryParams.Get("id")
 
 	if id == "" {
-		id = authId // получим свою аватарку
+		id = authID // получим свою аватарку
 	} else if internal.ValidateUUID(id) != nil {
 		http.Error(w, jsonError("Invalid id"), http.StatusBadRequest)
 		return
@@ -169,4 +173,18 @@ func (uc *UserController) RemoveProfilePicture(w http.ResponseWriter, r *http.Re
 	json.NewEncoder(w).Encode(domain.SuccessResponse{
 		Message: "Profile picture deleted",
 	})
+}
+
+func (uc *UserController) GetHistory(w http.ResponseWriter, r *http.Request) {
+	userID := r.Context().Value("x-user-id").(string)
+
+	userHistory, err := uc.HistoryUseCase.GetUserHistory(r.Context(), userID)
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(userHistory)
 }

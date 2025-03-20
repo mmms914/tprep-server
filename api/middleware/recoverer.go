@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"github.com/gookit/slog"
 	"net/http"
 )
 
@@ -12,6 +13,7 @@ func Recoverer(next http.Handler) http.Handler {
 					panic(rvr)
 				}
 				w.WriteHeader(http.StatusInternalServerError)
+				slog.Error(rvr)
 			}
 		}()
 		next.ServeHTTP(w, r)

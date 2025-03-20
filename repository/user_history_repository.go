@@ -2,7 +2,9 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 	"main/database"
 	"main/domain"
 )
@@ -23,16 +25,17 @@ func (uhr *userHistoryRepository) CreateIfNotExists(c context.Context, userID st
 	collection := uhr.database.Collection(uhr.collection)
 
 	var userHistory domain.UserHistory
-	filter := bson.M{"user_id": userID}
-	if collection.FindOne(c, filter).Decode(&userHistory) != nil {
-		userHistory = domain.UserHistory{
-			UserID: userID,
-			Items:  make([]domain.HistoryItem, 0),
-		}
-		_, err := collection.InsertOne(c, userHistory)
-		if err != nil {
+	filter := bson.M{"_id": userID}
+	if err := collection.FindOne(c, filter).Decode(&userHistory); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			userHistory := domain.UserHistory{
+				UserID: userID,
+				Items:  make([]domain.HistoryItem, 0),
+			}
+			_, err = collection.InsertOne(c, userHistory)
 			return err
 		}
+		return err
 	}
 	return nil
 }
@@ -44,7 +47,7 @@ func (uhr *userHistoryRepository) UpdateByID(c context.Context, userID string, i
 	}
 
 	collection := uhr.database.Collection(uhr.collection)
-	filter := bson.D{{Key: "user_id", Value: userID}}
+	filter := bson.D{{Key: "_id", Value: userID}}
 	update := bson.D{
 		{"$push", bson.D{
 			{"items", item},
@@ -57,23 +60,20 @@ func (uhr *userHistoryRepository) UpdateByID(c context.Context, userID string, i
 
 func (uhr *userHistoryRepository) GetByID(c context.Context, userID string) (domain.UserHistory, error) {
 	collection := uhr.database.Collection(uhr.collection)
-	filter := bson.D{{Key: "user_id", Value: userID}}
+	filter := bson.D{{Key: "_id", Value: userID}}
 
-	var items []domain.HistoryItem
+	var userHistory domain.UserHistory
 
-	cursor, err := collection.Find(c, filter)
+	err := collection.FindOne(c, filter).Decode(&userHistory)
 	if err != nil {
-		return domain.UserHistory{}, err
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return domain.UserHistory{
+				UserID: userID,
+				Items:  make([]domain.HistoryItem, 0),
+			}, nil
+		}
+		return userHistory, err
 	}
 
-	err = cursor.All(c, &items)
-	if err != nil {
-		return domain.UserHistory{}, err
-	}
-
-	userHistory := domain.UserHistory{
-		UserID: userID,
-		Items:  items,
-	}
 	return userHistory, nil
 }
