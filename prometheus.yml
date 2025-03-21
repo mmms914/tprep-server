@@ -1,0 +1,12 @@
+global:
+  scrape_interval:     30s # By default, scrape targets every 15 seconds.
+  evaluation_interval: 30s # By default, scrape targets every 15 seconds.
+
+scrape_configs:
+  - job_name: 'tprep-server'
+
+    scrape_interval: 30s
+    scrape_timeout: 30s
+
+    static_configs:
+      - targets: ['tprep-server:3000']

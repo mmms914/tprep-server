@@ -3,21 +3,44 @@ package bootstrap
 import (
 	"context"
 	"github.com/gookit/slog"
-	"go.mongodb.org/mongo-driver/v2/mongo"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"main/database"
+	"time"
 )
 
-func NewMongoDatabase(env *Env) *mongo.Client {
-	mongodbURI := env.MongoURI
-	client, err := mongo.Connect(options.Client().ApplyURI(mongodbURI))
+func NewMongoDatabase(env *Env) database.Client {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	var mongodbURI string
+	if env.AppEnv == "local" {
+		mongodbURI = env.LocalMongoURI
+	} else if env.AppEnv == "docker" {
+		mongodbURI = env.DockerMongoURI
+	}
+
+	client, err := database.NewClient(mongodbURI)
 	if err != nil {
 		slog.Fatal(err)
 	}
 
-	err = client.Ping(context.TODO(), nil)
+	err = client.Ping(ctx)
 	if err != nil {
-		slog.FatalErr(err)
+		slog.Fatal(err)
 	}
+
 	slog.Println("Successfully connected to MongoDB!")
 	return client
+}
+
+func CloseMongoDBConnection(client database.Client) {
+	if client == nil {
+		return
+	}
+
+	err := client.Disconnect(context.TODO())
+	if err != nil {
+		slog.Fatal(err)
+	}
+
+	slog.Println("Connection to MongoDB closed.")
 }

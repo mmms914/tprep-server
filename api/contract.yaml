@@ -1,0 +1,1340 @@
+openapi: 3.0.3
+info:
+  title: T-Prep
+  version: 0.0.1
+servers:
+- url: http://localhost:3000
+- url: http://217.71.129.139:5094
+tags:
+  - name: public
+    description: Публичные методы
+    
+  - name: global
+    description: Глобальные НЕпубличные методы
+  
+  - name: card
+    description: Взаимодействие с картой
+    
+  - name: collection
+    description: Взаимодействие с колодой
+    
+  - name: user
+    description: Операции над пользователем
+paths:
+  /global/getTrainingPlan:
+      get:
+        tags:
+          - global
+        summary: Получение плана тренировок
+        description: План тренировок в соответствии с кривой забывания; разница между finish_date и start_date не должна быть меньше суток
+        operationId: getTrainingPlan
+        parameters:
+          - name: start_date
+            description: Дата и время начала тренировок (в формате timestamp); так как в приложении выбирается только дата, если дата сегодняшняя, время это текущее + минута, иначе - предпочитаемое
+            in: query
+            required: true 
+            schema:
+              type: integer
+          - name: end_date
+            description: Дата и время конца тренировок (в формате timestamp); так как в приложении выбирается только дата, за время рекомендуется принимать 23:59, хотя некритично
+            in: query
+            required: true 
+            schema:
+              type: integer
+          - name: preferred_time
+            description: Предпочитаемое время начала тренировок (в секундах, 0 - 86399, где 0 - 00:00, а 86399 - 23:59) - UTC +0tz
+            in: query
+            required: true 
+            schema:
+              type: integer
+        responses:
+          '200':
+            description: план успешно создан, возвращаются даты и времена тренировок (unix timestamp)
+            content:
+              application/json:
+                schema:
+                  type: object
+                  example: {"count": 3, "items": [1738416995, 1738526995, 1738636995]}
+                  properties:
+                    count:
+                      type: integer
+                      example: количество тренировок
+                    items:
+                      type: array
+                      items:
+                        type: integer
+          '400':
+            description: неверные данные
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: preffered time invalid
+          '401':
+            description: токен недействителен
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: "*custom error*"
+  /public/signup:
+    post:
+      tags:
+        - public
+      summary: Создание пользователя
+      description: После регистрации пользователя, он сразу логинится и ему выдаются токены
+      operationId: createUser
+      requestBody:
+        description: Данные нового пользователя
+        content:
+          application/json:
+            schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+                    example: theUser
+                  email:
+                    type: string
+                    example: john@email.com 
+                  password:
+                    type: string
+                    example: qwerty132
+      responses:
+        '201':
+          description: пользователь успешно создан
+          headers:
+            X-Access-Expires-After:
+              description: UTC-дата окончания действия access токена
+              schema:
+                type: string
+                format: date-time
+            X-Refresh-Expires-After:
+              description: UTC-дата окончания действия refresh токена
+              schema:
+                type: string
+                format: date-time
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: de6836b5-41f6-427a-a0c2-9864d3f7b65e
+                  access_token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IjIyIiwiaWQiOiJkZTY4MzZiNS00MWY2LTQyN2EtYTBjMi05ODY0ZDNmN2I2NWUiLCJleHAiOjE3MzM2NTQxMzF9.TRTlu6YjA-wGuVFN5zDklc7haC2CcHYig9TBJHzHrew"
+                  refresh_token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IiIsImlkIjoiZGU2ODM2YjUtNDFmNi00MjdhLWEwYzItOTg2NGQzZjdiNjVlIiwiZXhwIjoxNzM0MjUxNzMxfQ.EQ19kCU_HkA4gKKxQg-bAe-Siw0pOMFKnZqnctM0oiQ
+        '400':
+          description: неверный формат данных
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: User with this email already exists
+  /public/login:
+    post:
+      tags:
+        - public
+      summary: Авторизация пользователя
+      description: ''
+      operationId: loginUser
+      requestBody:
+        description: Данные для логина
+        content:
+          application/json:
+            schema:
+                type: object
+                properties:
+                  email:
+                    type: string
+                    example: john@email.com 
+                  password:
+                    type: string
+                    example: qwerty132
+      responses:
+        '200':
+          description: успешная авторизация; возвращает токены пользователя
+          headers:
+            X-Access-Expires-After:
+              description: UTC-дата окончания действия access токена
+              schema:
+                type: string
+                format: date-time
+            X-Refresh-Expires-After:
+              description: UTC-дата окончания действия refresh токена
+              schema:
+                type: string
+                format: date-time
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IjIyIiwiaWQiOiJkZTY4MzZiNS00MWY2LTQyN2EtYTBjMi05ODY0ZDNmN2I2NWUiLCJleHAiOjE3MzM2NTQxMzF9.TRTlu6YjA-wGuVFN5zDklc7haC2CcHYig9TBJHzHrew"
+                  refresh_token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IiIsImlkIjoiZGU2ODM2YjUtNDFmNi00MjdhLWEwYzItOTg2NGQzZjdiNjVlIiwiZXhwIjoxNzM0MjUxNzMxfQ.EQ19kCU_HkA4gKKxQg-bAe-Siw0pOMFKnZqnctM0oiQ
+        '400':
+          description: неверный формат данных или логин/пароль
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invalid credentials
+  /public/refreshToken:
+    post:
+      tags:
+        - public
+      summary: Обновление токена
+      description: ''
+      operationId: refreshToken
+     
+      requestBody:
+        description: текущий refresh_token
+        content:
+          application/json:
+            schema:
+                type: object
+                properties:
+                  refresh_token:
+                    type: string
+                    example: eyJ22hbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IiIsImlkIjoiMjEyYTljNDEtMWIxNC00NDMyLWE0OTMtOTMyNzg5YjU5OGY2IiwiZXhwIjoxNzM0MjQ4OTUxfQ.wqQ4Fus6fL8OF0Zp5Hv8NS1wkqSF03ttNuXnO8eIDPc"
+      responses:
+        '200':
+          description: возвращает новые access_token и refresh_token 
+          headers:
+            X-Access-Expires-After:
+              description: UTC-дата окончания действия access токена
+              schema:
+                type: string
+                format: date-time
+            X-Refresh-Expires-After:
+              description: UTC-дата окончания действия refresh токена
+              schema:
+                type: string
+                format: date-time
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IjIyIiwiaWQiOiJkZTY4MzZiNS00MWY2LTQyN2EtYTBjMi05ODY0ZDNmN2I2NWUiLCJleHAiOjE3MzM2NTQxMzF9.TRTlu6YjA-wGuVFN5zDklc7haC2CcHYig9TBJHzHrew"
+                  refresh_token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IiIsImlkIjoiZGU2ODM2YjUtNDFmNi00MjdhLWEwYzItOTg2NGQzZjdiNjVlIiwiZXhwIjoxNzM0MjUxNzMxfQ.EQ19kCU_HkA4gKKxQg-bAe-Siw0pOMFKnZqnctM0oiQ
+        '401':
+          description: неверный refresh_token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invalid refresh token
+  /collection/{id}/card:
+    post:
+      tags:
+        - card
+      summary: Создание карточки и ее добавление в колоду
+      description: Доступно только создателю колоды
+      operationId: addCard
+      parameters:
+        - name: id
+          in: path
+          required: true 
+          schema:
+            type: string
+      requestBody:
+        description: вопрос и ответ
+        content:
+          application/json:
+            schema:
+                type: object
+                properties:
+                  question:
+                    type: string
+                    example: how are you?
+                  answer:
+                    type: string
+                    example: im ok
+        
+      responses:
+        '201':
+          description: успешная операция
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  local_id:
+                    type: integer
+                    example: 0
+                  question: 
+                    type: string
+                    example: how are you?
+                  answer:
+                    type: string
+                    example: im ok
+        '404':
+          description: колоды не существует
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: There is no collection with this ID
+        '401':
+          description: токен недействителен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Not authorized
+        '403':
+            description: нет доступа к колоде
+            content:
+              apllication/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: You are not the owner of this collection
+      security:
+        - bearerAuth: []
+  /collection/{id}/card/{cardID}:
+    put:
+      tags:
+        - card
+      summary: Изменение существующей карточки
+      description: Доступно только создателю колоды
+      operationId: UpdateCard
+      parameters:
+        - name: id
+          in: path
+          required: true 
+          schema:
+            type: string
+        - name: cardID
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        description: вопрос и ответ
+        content:
+          application/json:
+            schema:
+                type: object
+                properties:
+                  question:
+                    type: string
+                    example: kak porabotal?
+                  answer:
+                    type: string
+                    example: normik
+      responses:
+        '200':
+          description: успешная операция
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Card updated
+        '404':
+          description: колоды не существует
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: There is no collection with this ID
+        '401':
+          description: токен недействителен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Not authorized
+        '403':
+            description: нет доступа к колоде
+            content:
+              apllication/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: You are not the owner of this collection
+      security:
+        - bearerAuth: []
+    delete:
+        tags:
+          - card
+        summary: Удаление карточки из колоды
+        description: Доступно только создателю колоды
+        operationId: deleteCard
+        parameters:
+          - name: id
+            in: path
+            required: true 
+            schema:
+              type: string
+          - name: cardID
+            in: path
+            required: true
+            schema:
+              type: integer
+        responses:
+          '200':
+            description: успешная операция
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Card deleted successfully
+          '404':
+            description: колоды не существует
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: There is no collection with this ID
+          '401':
+            description: токен недействителен
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Not authorized
+          '403':
+            description: нет доступа к колоде
+            content:
+              apllication/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: You are not the owner of this collection
+        security:
+          - bearerAuth: []
+  /user:
+    get:
+      tags:
+        - user
+      summary: Получение информации о пользователе
+      description: Доступно только авторизованным пользователям. Для текущего пользователя отображается вся информация, для чужого - email отсутствует, в поле collections только публичные колоды
+      operationId: getUserInfo
+      parameters:
+          - name: id
+            in: query
+            description: id пользователя, информацию о котором необходимо получить; если не указано, возвращается информация о текущем пользователе
+            required: false
+            schema:
+              type: string
+      responses:
+        '200':
+          description: успешная операция
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserInfo"
+        '404':
+            description: пользователь не найден
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: "*custom error*"
+        '401':
+            description: пользователь не найден
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Not authorized
+        
+      security:
+        - bearerAuth: []
+    
+    put:
+      tags:
+        - user
+      summary: Обновление данных о пользователе
+      description: Доступно только авторизованным пользователям
+      operationId: updateUser
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  example: theUser
+                email:
+                  type: string
+                  example: john@email.com
+      responses:
+        '200':
+            description: информация о пользователе обновлена
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: User updated
+        '400':
+          description: недопустимые данные
+          content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Invalid username/email
+        '401':
+            description: токен недействителен
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Not authorized
+      security:
+        - bearerAuth: []
+  /user/picture:
+    get:
+      tags:
+        - user
+      summary: Получение аватарки пользователя
+      description: Доступно только авторизованным пользователям
+      operationId: getUserPicture
+      parameters:
+        - name: id
+          in: query
+          description: id пользователя, аватарку которого необходимо получить; если не задано, возвращается аватарка текущего пользователя
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: успешная операция
+          content:
+            image/jpeg:
+              schema:
+                example: бинарные данные
+                
+        '404':
+            description: аватарка пользователя не установлена
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: "User picture not found"
+        '401':
+            description: пользователь не найден
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Not authorized
+        
+      security:
+        - bearerAuth: []
+    put:
+      tags:
+        - user
+      summary: Загрузка аватарки на сервер
+      description: Доступно только авторизованным пользователям; размер изображения не может превышать 5 МБ; устанавливает has_picture пользователя на true
+      operationId: updateUserPicture
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+              
+      responses:
+        '200':
+            description: аватарка успешно загружена
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Picture uploaded successfully
+        '400':
+          description: недопустимые данные
+          content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Error with file or its max size
+        '401':
+            description: токен недействителен
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Not authorized
+      security:
+        - bearerAuth: []
+    delete:
+      tags:
+        - user
+      summary: Удаление аватарки с сервера
+      description: Доступно только авторизованным пользователям; устанавливает has_picture пользователя на false
+      operationId: deleteUserPicture
+              
+      responses:
+        '200':
+            description: аватарка успешно удалена / аватарки и не было на сервере, короче точно больше не хранится
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Profile picture deleted
+        '401':
+            description: токен недействителен
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Not authorized
+      security:
+        - bearerAuth: []
+  /user/history:
+    get:
+      tags:
+        - user
+      summary: Получение истории тренировок текущего пользователя
+      description: Доступно только авторизованным пользователям
+      operationId: getUserHistory
+      parameters:
+        - name: from_time
+          in: query
+          required: true 
+          description: начальная точка времени, с которого возвращать историю (UTC Timestamp)
+          schema:
+            type: integer
+            example: 123123123
+      responses:
+        '200':
+          description: успешная операция
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    example: 1
+                  
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/HistoryItem"
+        '401':
+            description: токен недействителен
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Not authorized
+        
+      security:
+        - bearerAuth: []
+  /collection:
+    post:
+      tags:
+        - collection
+      summary: Создание колоды
+      description: Доступно только авторизованному пользователю
+      operationId: createCollection
+      requestBody:
+        description: JSON-объект
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: theUserCollection
+                is_public:
+                  type: boolean
+                  example: false
+      responses:
+        '201':
+          description: колода создана
+          content:
+            application/json:
+              schema:
+                type: object
+                description: в поле "cards" хранятся local-IDs карт колоды
+                properties:
+                  id:
+                    type: string
+                    format: int64
+                    example: b3c337b6-171a-48cc-84ef-861398338f8c
+                  name:
+                    type: string
+                    example: theUserCollection
+                  is_public:
+                    type: boolean
+                    example: false
+                  cards:
+                    type: array
+                    items: 
+                      $ref: "#/components/schemas/Card"
+                    example: []
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invalid name
+        '401':
+          description: токен недействителен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "*custom error*"
+      security:
+        - bearerAuth: []
+  /collection/search:
+    post:
+      tags:
+        - collection
+      summary: Поиск публичных колод
+      operationId: searchCollections
+      parameters:
+          - name: name
+            in: query
+            required: false
+            description: если параметр не задан, возвращаются просто публичные колоды
+            schema:
+              type: string
+              example: математика 5 класс
+          - name: count
+            in: query
+            required: true
+            description: количество элементов (от 1 до 100)
+            schema:
+              type: integer
+              example: 10
+          - name: offset
+            in: query
+            required: true
+            description: пропуск определенного числа найденных элементов (от 0)
+            schema:
+              type: integer
+              example: 30
+      responses:
+        '200':
+          description: поиск прошел успешно, возвращается массив с превью колод; полученный count может быть меньше переданного count
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    example: 1
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/CollectionPreview"
+        '401':
+          description: токен недействителен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Not authorized
+        '400':
+          description: недопустимые данные
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invalid count
+                
+        '404':
+          description: коллекции по данному запросу не были найдены
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Сouldn't find anything
+      security:
+        - bearerAuth: []
+  /collection/training:
+    post:
+      tags:
+        - collection
+      summary: Добавление новой тренировки в историю
+      description: Доступно только авторизованным пользователям. Поле all_cards_count - количество карт во всей колоде, даже если эти карты не были пройдены. Поле blank_answer присутствует с любым значением, даже если тип вопроса не input
+      operationId: updateUserHistory
+      requestBody:
+        $ref: '#/components/requestBodies/HistoryItemRequest'
+      responses:
+        '201':
+          description: успешная операция
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: History item successfully added
+        '401':
+            description: токен недействителен
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Not authorized
+        
+      security:
+        - bearerAuth: []
+  /collection/{id}:
+    get:
+      tags:
+        - collection
+      summary: Получение колоды
+      description: Возможность получения колоды зависит от is_public
+      operationId: getCollection
+      parameters:
+        - name: id
+          description: ID колоды
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: успешная операция
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'
+        '404':
+          description: колоды не существует
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: There is no collection with this ID
+        '401':
+          description: токен недействителен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Not authorized
+        '403':
+            description: нет доступа к колоде
+            content:
+              apllication/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: You are not the owner of this collection
+      security:
+        - bearerAuth: []
+    put:
+      tags:
+        - collection
+      summary: Изменение колоды
+      description: Доступно только создателю
+      operationId: updateCollection
+      parameters:
+        - name: id
+          description: ID колоды
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: '#/components/requestBodies/ChangeCollection'
+      responses:
+        '200':
+          description: успешная операция
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Collection updated
+        '400':
+          description: недопустимые данные
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invalid name
+        '404':
+          description: колоды не существует
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: There is no collection with this ID
+        '401':
+          description: недействительный токен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Not authorized
+        '403':
+            description: нет доступа к колоде
+            content:
+              apllication/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: You are not the owner of this collection
+      security:
+        - bearerAuth: []
+    delete:
+      tags:
+        - collection
+      summary: Удаление колоды
+      description: Доступно только создателю
+      operationId: deleteCollection
+      parameters:
+        - name: id
+          description: ID колоды
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: колода удалена
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Collection deleted successfully
+        '404':
+          description: колоды не существует
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: There is no collection with this ID
+        '403':
+          description: нет доступа к колоде
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: You are not the owner of this collection
+        '401':
+          description: недействительный токен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Not authorized
+      security:
+        - bearerAuth: []
+  
+components:
+  schemas:
+    Card:
+      type: object
+      properties:
+        local_id:
+          type: integer
+          format: int64
+          example: 10
+        question:
+          type: string
+          example: What is ur name?
+        answer:
+          type: string
+          example: Cox-Zucker
+    HistoryItem:
+      type: object
+      properties:
+        collection_id:
+          type: string
+          example: ceb80d45-81ae-47b7-bfaf-c396bcd773fe
+        collection_name:
+          type: string
+          example: Математический анализ
+        time:
+          type: integer
+          example: 123123123
+        correct_cards:
+          type: array
+          items:
+            type: integer
+          example: [1, 22, 13, 5, 2]
+        incorrect_cards:
+          type: array
+          items:
+            type: integer
+          example: [55]
+        all_cards_count:
+          type: integer
+          example: 58
+        errors:
+          type: array
+          items:
+            $ref: '#/components/schemas/ErrorItem'
+        right_answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/RightItem'
+    ErrorItem:
+      type: object
+      properties:
+        card_id:
+          type: integer
+          format: int64
+          example: 55
+        question:
+          type: string
+          example: How are you?
+        answer:
+          type: string
+          example: Fine
+        type:
+          type: string
+          example: choice
+        user_answer:
+          type: string
+          example: my input
+        blank_answer:
+          type: string
+          example: blank answer
+    RightItem:
+      type: object
+      properties:
+        card_id:
+          type: integer
+          format: int64
+          example: 13
+        type:
+          type: string
+          example: choice
+    Collection:
+      type: object
+      description: в поле "cards" хранятся объекты карт
+      properties:
+        id:
+          type: string
+          example: b3c337b6-171a-48cc-84ef-861398338f8c
+        name:
+          type: string
+          example: theUserCollection
+        is_public:
+          type: boolean
+          example: false
+        author:
+          type: string
+          example: 9522ba7f-113c-4992-9032-7747f0c5a59d
+        cards:
+          type: array
+          items: 
+            $ref: "#/components/schemas/Card"
+          example: [
+            {
+              "local_id": 1,
+              "question": "What is ur name?",
+              "answer": "Cox-Zucker"
+            }, {
+              "local_id": 2,
+              "question": "whatsup",
+              "answer": "ok"
+            }
+            ]
+    CollectionPreview:
+      type: object
+      description: для получения карт колоды вызвать GET с id
+      properties:
+        id:
+          type: string
+          example: b3c337b6-171a-48cc-84ef-861398338f8c
+        name:
+          type: string
+          example: theUserCollection
+        is_public:
+          type: boolean
+          example: true
+        cards_count:
+          type: integer
+          example: 32
+    UserInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 9522ba7f-113c-4992-9032-7747f0c5a59d
+        username:
+          type: string
+          example: theUser
+        email:
+          type: string
+          example: 123@mail.ru
+        has_picture:
+          type: boolean
+          example: false
+        collections:
+          type: array
+          items:
+            type: string
+          example: [
+        "ceb80d45-81ae-47b7-bfaf-c396bcd773fe",
+        "acac1c7d-444f-4a88-ba90-a535aa73bc4c",
+        "bd134d4a-f6f0-4df6-8f34-0340766eb5cb"
+        ]
+        statistics: 
+          type: object
+          properties:
+            total_trainings:
+              type: integer
+              example: 32
+            medium_percentage:
+              type: integer
+              example: 99
+    PublicUserInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 9522ba7f-113c-4992-9032-7747f0c5a59d
+        username:
+          type: string
+          example: theUser
+        has_picture:
+          type: boolean
+          example: false
+        collections:
+          type: array
+          items:
+            type: string
+          example: [
+        "ceb80d45-81ae-47b7-bfaf-c396bcd773fe",
+        "acac1c7d-444f-4a88-ba90-a535aa73bc4c",
+        "bd134d4a-f6f0-4df6-8f34-0340766eb5cb"
+        ]
+        statistics: 
+          type: object
+          properties:
+            total_trainings:
+              type: integer
+              example: 32
+            medium_percentage:
+              type: integer
+              example: 99
+  requestBodies:
+    CardWithoutID:
+      content:
+       application/json:
+            schema:
+              type: object
+              properties:
+                question:
+                  type: string
+                  example: What is ur name?
+                answer:
+                  type: string
+                  example: Cox-Zucker
+    ChangeCollection:
+      required: true
+      content:
+       application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: my training
+                is_public:
+                  type: boolean
+                  example: true
+    HistoryItemRequest:
+      required: true
+      content:
+        application/json:
+            schema:
+              type: object
+              properties:
+                collection_id:
+                  type: string
+                  example: ceb80d45-81ae-47b7-bfaf-c396bcd773fe
+                collection_name:
+                  type: string
+                  example: Математический анализ
+                time:
+                  type: integer
+                  example: 123123123
+                correct_cards:
+                  type: array
+                  items:
+                    type: integer
+                  example: [1, 22, 13, 5, 2]
+                incorrect_cards:
+                  type: array
+                  items:
+                    type: integer
+                  example: [55]
+                all_cards_count:
+                  type: integer
+                  example: 58
+                errors:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ErrorItem'
+                right_answers:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/RightItem'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "access_token"
