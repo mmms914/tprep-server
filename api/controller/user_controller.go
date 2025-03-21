@@ -5,6 +5,7 @@ import (
 	"main/domain"
 	"main/internal"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -176,15 +177,28 @@ func (uc *UserController) RemoveProfilePicture(w http.ResponseWriter, r *http.Re
 }
 
 func (uc *UserController) GetHistory(w http.ResponseWriter, r *http.Request) {
+	var result domain.UserHistoryArray
+
 	userID := r.Context().Value("x-user-id").(string)
 
-	userHistory, err := uc.HistoryUseCase.GetUserHistory(r.Context(), userID)
+	queryParams := r.URL.Query()
+	fromTime, err := strconv.Atoi(queryParams.Get("from_time"))
+
+	if err != nil || fromTime < 0 {
+		http.Error(w, jsonError("Invalid from_time"), http.StatusBadRequest)
+		return
+	}
+
+	userHistory, err := uc.HistoryUseCase.GetUserHistoryFromTime(r.Context(), userID, fromTime)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusNotFound)
 		return
 	}
 
+	result.Count = len(userHistory)
+	result.Items = userHistory
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(userHistory)
+	json.NewEncoder(w).Encode(result)
 }

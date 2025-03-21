@@ -343,6 +343,16 @@ func (cc *CollectionController) AddTraining(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	if historyItem.IncorrectCards == nil || historyItem.CorrectCards == nil || historyItem.Errors == nil || historyItem.RightAnswers == nil {
+		http.Error(w, jsonError("Invalid body data. Check errors/right_answers/(in)correct_cards"), http.StatusBadRequest)
+		return
+	}
+
+	if historyItem.Time < 0 {
+		http.Error(w, jsonError("Invalid body data. Check time"), http.StatusBadRequest)
+		return
+	}
+
 	err = cc.HistoryUseCase.AddTraining(r.Context(), userID, historyItem)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)

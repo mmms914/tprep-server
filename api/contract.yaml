@@ -689,6 +689,14 @@ paths:
       summary: Получение истории тренировок текущего пользователя
       description: Доступно только авторизованным пользователям
       operationId: getUserHistory
+      parameters:
+        - name: time
+          in: query
+          required: true 
+          description: начальная точка времени, с которого возвращать историю (UTC Timestamp)
+          schema:
+            type: integer
+            example: 123123123
       responses:
         '200':
           description: успешная операция
@@ -697,9 +705,9 @@ paths:
               schema:
                 type: object
                 properties:
-                  user_id:
-                    type: string
-                    example: b3c337b6-171a-48cc-84ef-861398338f8c
+                  count:
+                    type: integer
+                    example: 1
                   
                   items:
                     type: array
@@ -1115,6 +1123,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ErrorItem'
+        right_answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/RightItem'
     ErrorItem:
       type: object
       properties:
@@ -1137,6 +1149,16 @@ components:
         blank_answer:
           type: string
           example: blank answer
+    RightItem:
+      type: object
+      properties:
+        card_id:
+          type: integer
+          format: int64
+          example: 13
+        type:
+          type: string
+          example: choice
     Collection:
       type: object
       description: в поле "cards" хранятся объекты карт
@@ -1306,6 +1328,10 @@ components:
                   type: array
                   items:
                     $ref: '#/components/schemas/ErrorItem'
+                right_answers:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/RightItem'
   securitySchemes:
     bearerAuth:
       type: http

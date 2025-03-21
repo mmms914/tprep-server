@@ -33,12 +33,12 @@ func (hu *historyUseCase) AddTraining(c context.Context, userID string, historyI
 		return err
 	}
 
-	userHistory, err := hu.GetUserHistory(ctx, userID)
+	userHistory, err := hu.GetUserHistoryFromTime(ctx, userID, 0)
 	if err != nil {
 		return err
 	}
 
-	newStatistics := internal.CalcStatistics(userHistory.Items)
+	newStatistics := internal.CalcStatistics(userHistory)
 
 	update := bson.D{
 		{"$set", bson.D{
@@ -49,18 +49,33 @@ func (hu *historyUseCase) AddTraining(c context.Context, userID string, historyI
 	if err != nil {
 		return err
 	}
+
 	smallHistoryItem := domain.SmallHistoryItem{
 		CollectionName: historyItem.CollectionName,
 		Time:           historyItem.Time,
 		CorrectCards:   historyItem.CorrectCards,
 		IncorrectCards: historyItem.IncorrectCards,
+		AllCardsCount:  historyItem.AllCardsCount,
 	}
+
 	return hu.collectionHistoryRepository.UpdateByID(ctx, historyItem.CollectionID, smallHistoryItem)
 }
 
-func (hu *historyUseCase) GetUserHistory(c context.Context, userID string) (domain.UserHistory, error) {
+func (hu *historyUseCase) GetUserHistoryFromTime(c context.Context, userID string, fromTime int) ([]domain.HistoryItem, error) {
 	ctx, cancel := context.WithTimeout(c, hu.contextTimeout)
 	defer cancel()
 
-	return hu.userHistoryRepository.GetByID(ctx, userID)
+	userHistoryUpdate := make([]domain.HistoryItem, 0)
+
+	allUserHistory, err := hu.userHistoryRepository.GetByID(ctx, userID)
+	if err != nil {
+		return userHistoryUpdate, err
+	}
+
+	for _, item := range allUserHistory.Items {
+		if item.Time >= fromTime {
+			userHistoryUpdate = append(userHistoryUpdate, item)
+		}
+	}
+	return userHistoryUpdate, nil
 }
