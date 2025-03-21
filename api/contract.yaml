@@ -690,7 +690,7 @@ paths:
       description: Доступно только авторизованным пользователям
       operationId: getUserHistory
       parameters:
-        - name: time
+        - name: from_time
           in: query
           required: true 
           description: начальная точка времени, с которого возвращать историю (UTC Timestamp)
