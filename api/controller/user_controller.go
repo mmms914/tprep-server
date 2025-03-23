@@ -178,15 +178,21 @@ func (uc *UserController) RemoveProfilePicture(w http.ResponseWriter, r *http.Re
 
 func (uc *UserController) GetHistory(w http.ResponseWriter, r *http.Request) {
 	var result domain.UserHistoryArray
+	var fromTime = 0
+	var err error
 
 	userID := r.Context().Value("x-user-id").(string)
 
 	queryParams := r.URL.Query()
-	fromTime, err := strconv.Atoi(queryParams.Get("from_time"))
+	fromTimeStr := queryParams.Get("from_time")
 
-	if err != nil || fromTime < 0 {
-		http.Error(w, jsonError("Invalid from_time"), http.StatusBadRequest)
-		return
+	if fromTimeStr != "" {
+		fromTime, err = strconv.Atoi(fromTimeStr)
+
+		if err != nil || fromTime < 0 {
+			http.Error(w, jsonError("Invalid from_time"), http.StatusBadRequest)
+			return
+		}
 	}
 
 	userHistory, err := uc.HistoryUseCase.GetUserHistoryFromTime(r.Context(), userID, fromTime)

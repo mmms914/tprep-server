@@ -692,8 +692,8 @@ paths:
       parameters:
         - name: from_time
           in: query
-          required: true 
-          description: начальная точка времени, с которого возвращать историю (UTC Timestamp)
+          required: false
+          description: начальная точка времени, с которого возвращать историю (UTC Timestamp); если не задан, возвращается вся история
           schema:
             type: integer
             example: 123123123
@@ -793,7 +793,7 @@ paths:
       security:
         - bearerAuth: []
   /collection/search:
-    post:
+    get:
       tags:
         - collection
       summary: Поиск публичных колод
