@@ -1320,6 +1320,12 @@ components:
               "answer": "ok"
             }
             ]
+        likes:
+          type: integer
+          example: 52
+        trainings:
+          type: integer
+          example: 527
     CollectionPreview:
       type: object
       description: для получения карт колоды вызвать GET с id
@@ -1375,6 +1381,15 @@ components:
             medium_percentage:
               type: integer
               example: 99
+        favourite:
+          type: array
+          items:
+            type: string
+          example: [
+        "ceb80d45-81ae-47b7-bfaf-c396bcd773fe",
+        "acac1c7d-444f-4a88-ba90-a535aa73bc4c",
+        "bd134d4a-f6f0-4df6-8f34-0340766eb5cb"
+        ]
     PublicUserInfo:
       type: object
       properties:
