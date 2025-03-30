@@ -18,6 +18,7 @@ type User struct {
 	HasPicture  bool           `bson:"has_picture" json:"has_picture"`
 	Collections []string       `bson:"collections" json:"collections"`
 	Statistics  UserStatistics `bson:"statistics" json:"statistics"`
+	Favourite   []string       `bson:"favourite" json:"favourite"`
 }
 
 type UserInfo struct {
@@ -27,6 +28,7 @@ type UserInfo struct {
 	HasPicture  bool           `bson:"has_picture" json:"has_picture"`
 	Collections []string       `bson:"collections" json:"collections"`
 	Statistics  UserStatistics `bson:"statistics" json:"statistics"`
+	Favourite   []string       `bson:"favourite" json:"favourite"`
 }
 
 type PublicUserInfo struct {
@@ -50,8 +52,8 @@ type UserUseCase interface {
 	PutByID(c context.Context, userID string, user *User) error
 	GetByID(c context.Context, userID string) (User, error)
 	DeleteByID(c context.Context, userID string) error
-	AddCollection(c context.Context, userID string, collectionID string) error
-	DeleteCollection(c context.Context, userID string, collectionID string) error
+	AddCollection(c context.Context, userID string, collectionID string, collectionType string) error
+	DeleteCollection(c context.Context, userID string, collectionID string, collectionType string) error
 	GetProfilePicture(c context.Context, userID string) ([]byte, error)
 	UploadProfilePicture(c context.Context, userID string, picture io.Reader, size int64) error
 	RemoveProfilePicture(c context.Context, userID string) error

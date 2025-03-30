@@ -32,6 +32,8 @@ func NewCollectionRouter(env *bootstrap.Env, timeout time.Duration, db database.
 			r.Get("/", cc.Get)
 			r.Put("/", cc.Update)
 			r.Delete("/", cc.Delete)
+			r.Put("/like", cc.AddLike)
+			r.Put("/unlike", cc.RemoveLike)
 			r.Route("/card", func(r chi.Router) {
 				r.Post("/", cc.CreateCard)
 				r.Route("/{cardID}", func(r chi.Router) {

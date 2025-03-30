@@ -24,6 +24,7 @@ func (su *signupUseCase) Create(c context.Context, user *domain.User) (string, e
 	defer cancel()
 
 	user.Collections = make([]string, 0)
+	user.Favourite = make([]string, 0)
 	return su.userRepository.Create(ctx, user)
 }
 

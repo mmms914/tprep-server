@@ -43,7 +43,7 @@ func (cc *CollectionController) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = cc.UserUseCase.AddCollection(r.Context(), userID, id)
+	err = cc.UserUseCase.AddCollection(r.Context(), userID, id, "collections")
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
 		return
@@ -102,6 +102,116 @@ func (cc *CollectionController) Update(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+func (cc *CollectionController) AddLike(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	userID := r.Context().Value("x-user-id").(string)
+
+	user, err := cc.UserUseCase.GetByID(r.Context(), userID)
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusNotFound)
+	}
+	for _, favID := range user.Favourite {
+		if favID == id {
+			http.Error(w, jsonError("Collection already in favourites"), http.StatusBadRequest)
+			return
+		}
+	}
+
+	coll, err := cc.CollectionUseCase.GetByID(r.Context(), id)
+	if err != nil {
+		http.Error(w, jsonError("There is no collection with this ID"), http.StatusNotFound)
+		return
+	}
+
+	if !coll.IsPublic && userID != coll.Author {
+		http.Error(w, jsonError("Collection is not public"), http.StatusForbidden)
+		return
+	}
+
+	collection, err := cc.CollectionUseCase.AddLike(r.Context(), id)
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	collectionInfo := domain.CollectionInfo{
+		ID:       collection.ID,
+		Name:     collection.Name,
+		IsPublic: collection.IsPublic,
+		Cards:    collection.Cards,
+		Author:   collection.Author,
+		Likes:    collection.Likes,
+	}
+
+	err = cc.UserUseCase.AddCollection(r.Context(), userID, id, "favourite")
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(collectionInfo.Likes)
+}
+
+func (cc *CollectionController) RemoveLike(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	userID := r.Context().Value("x-user-id").(string)
+
+	user, err := cc.UserUseCase.GetByID(r.Context(), userID)
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusNotFound)
+	}
+	found := false
+	for _, favID := range user.Favourite {
+		if favID == id {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		http.Error(w, jsonError("Collection not in favourites"), http.StatusBadRequest)
+		return
+	}
+
+	coll, err := cc.CollectionUseCase.GetByID(r.Context(), id)
+	if err != nil {
+		http.Error(w, jsonError("There is no collection with this ID"), http.StatusNotFound)
+		return
+	}
+
+	if !coll.IsPublic && userID != coll.Author {
+		http.Error(w, jsonError("Collection is not public"), http.StatusForbidden)
+		return
+	}
+
+	collection, err := cc.CollectionUseCase.RemoveLike(r.Context(), id)
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	collectionInfo := domain.CollectionInfo{
+		ID:       collection.ID,
+		Name:     collection.Name,
+		IsPublic: collection.IsPublic,
+		Cards:    collection.Cards,
+		Author:   collection.Author,
+		Likes:    collection.Likes,
+	}
+
+	err = cc.UserUseCase.DeleteCollection(r.Context(), userID, id, "favourite")
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(collectionInfo.Likes)
+}
+
 func (cc *CollectionController) Get(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("x-user-id").(string)
 
@@ -123,6 +233,7 @@ func (cc *CollectionController) Get(w http.ResponseWriter, r *http.Request) {
 		IsPublic: collection.IsPublic,
 		Cards:    collection.Cards,
 		Author:   collection.Author,
+		Likes:    collection.Likes,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -152,7 +263,7 @@ func (cc *CollectionController) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = cc.UserUseCase.DeleteCollection(r.Context(), userID, id)
+	err = cc.UserUseCase.DeleteCollection(r.Context(), userID, id, "collections")
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
 		return

@@ -39,6 +39,9 @@ func (uc *UserController) Get(w http.ResponseWriter, r *http.Request) {
 		if user.Collections == nil {
 			userInfo.Collections = make([]string, 0)
 		}
+		if user.Favourite == nil {
+			userInfo.Favourite = make([]string, 0)
+		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(userInfo)

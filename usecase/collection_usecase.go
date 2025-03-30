@@ -50,6 +50,63 @@ func (cu *collectionUseCase) PutByID(c context.Context, collectionID string, col
 	return nil
 }
 
+func (cu *collectionUseCase) AddLike(c context.Context, collectionID string) (*domain.Collection, error) {
+	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
+	defer cancel()
+
+	update := bson.D{
+		{"$inc", bson.D{{"likes", 1}}},
+	}
+	res, err := cu.collectionRepository.UpdateByID(ctx, collectionID, update)
+	if err != nil {
+		return nil, err
+	}
+	if res.MatchedCount == 0 {
+		return nil, errors.New("collection not exists")
+	}
+	updated, err := cu.collectionRepository.GetByID(ctx, collectionID)
+	if err != nil {
+		return nil, err
+	}
+	return &updated, nil
+}
+
+func (cu *collectionUseCase) RemoveLike(c context.Context, collectionID string) (*domain.Collection, error) {
+	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
+	defer cancel()
+
+	// Сначала получаем текущее состояние коллекции
+	current, err := cu.collectionRepository.GetByID(ctx, collectionID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Если лайков уже 0, просто возвращаем текущее состояние
+	if current.Likes <= 0 {
+		return &current, nil
+	}
+
+	// Обновляем только если лайков > 0
+	update := bson.D{
+		{"$inc", bson.D{{"likes", -1}}},
+	}
+
+	res, err := cu.collectionRepository.UpdateByID(ctx, collectionID, update)
+	if err != nil {
+		return nil, err
+	}
+	if res.MatchedCount == 0 {
+		return nil, errors.New("collection not exists")
+	}
+
+	updated, err := cu.collectionRepository.GetByID(ctx, collectionID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &updated, nil
+}
+
 func (cu *collectionUseCase) DeleteByID(c context.Context, collectionID string) error {
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
