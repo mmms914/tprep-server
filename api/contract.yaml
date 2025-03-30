@@ -813,6 +813,13 @@ paths:
             schema:
               type: string
               example: likes или trainings
+          - name: category
+            in: query
+            required: false
+            description: пока есть возможность получить только избранные колоды
+            schema:
+              type: string
+              example: favourite
           - name: count
             in: query
             required: true
@@ -970,7 +977,7 @@ paths:
     put:
       tags:
         - collection
-      summary: убрать лайк с колоды
+      summary: Убрать лайк с колоды
       description: Возможность снять лайк. Возвращает текущее количество лайков
       operationId: RemoveLike
       parameters:

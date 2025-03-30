@@ -288,6 +288,8 @@ func (cc *CollectionController) Search(w http.ResponseWriter, r *http.Request) {
 	var result domain.CollectionPreviewArray
 	var err error
 
+	userID := r.Context().Value("x-user-id").(string)
+
 	queryParams := r.URL.Query()
 	name := queryParams.Get("name")
 	count, err := strconv.Atoi(queryParams.Get("count"))
@@ -300,17 +302,23 @@ func (cc *CollectionController) Search(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, jsonError("Invalid offset"), http.StatusBadRequest)
 		return
 	}
-	sort_by := queryParams.Get("sort_by")
+	sortBy := queryParams.Get("sort_by")
 
-	if sort_by != "likes" && sort_by != "trainings" && sort_by != "" {
+	if sortBy != "likes" && sortBy != "trainings" && sortBy != "" {
 		http.Error(w, jsonError("invalid sort method"), http.StatusBadRequest)
 		return
 	}
-	if sort_by == "" {
-		sort_by = "likes"
+	if sortBy == "" {
+		sortBy = "likes"
 	}
 
-	collections, err = cc.CollectionUseCase.SearchPublic(r.Context(), name, count, offset, sort_by)
+	category := queryParams.Get("category")
+	if category != "" && category != "favourite" {
+		http.Error(w, jsonError("invalid category"), http.StatusBadRequest)
+		return
+	}
+
+	collections, err = cc.CollectionUseCase.SearchPublic(r.Context(), name, count, offset, sortBy, category, userID)
 
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)

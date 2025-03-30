@@ -21,7 +21,7 @@ func NewCollectionRouter(env *bootstrap.Env, timeout time.Duration, db database.
 
 	cr := repository.NewCollectionRepository(db, domain.CollectionCollection)
 	cc := &controller.CollectionController{
-		CollectionUseCase: usecase.NewCollectionUseCase(cr, timeout),
+		CollectionUseCase: usecase.NewCollectionUseCase(cr, ur, timeout),
 		UserUseCase:       usecase.NewUserUseCase(ur, us, timeout),
 		HistoryUseCase:    usecase.NewHistoryUseCase(uhr, chr, cr, ur, timeout),
 	}

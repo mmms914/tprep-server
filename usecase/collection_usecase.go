@@ -11,12 +11,14 @@ import (
 
 type collectionUseCase struct {
 	collectionRepository domain.CollectionRepository
+	userRepository       domain.UserRepository
 	contextTimeout       time.Duration
 }
 
-func NewCollectionUseCase(collectionRepository domain.CollectionRepository, timeout time.Duration) domain.CollectionUseCase {
+func NewCollectionUseCase(collectionRepository domain.CollectionRepository, userRepository domain.UserRepository, timeout time.Duration) domain.CollectionUseCase {
 	return &collectionUseCase{
 		collectionRepository: collectionRepository,
+		userRepository:       userRepository,
 		contextTimeout:       timeout,
 	}
 }
@@ -116,7 +118,7 @@ func (cu *collectionUseCase) GetByID(c context.Context, collectionID string) (do
 	return cu.collectionRepository.GetByID(ctx, collectionID)
 }
 
-func (cu *collectionUseCase) SearchPublic(c context.Context, text string, count int, offset int, sort_by string) ([]domain.Collection, error) {
+func (cu *collectionUseCase) SearchPublic(c context.Context, text string, count int, offset int, sortBy string, category string, userID string) ([]domain.Collection, error) {
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
 
@@ -134,14 +136,31 @@ func (cu *collectionUseCase) SearchPublic(c context.Context, text string, count 
 		}
 	}
 
+	if category == "favourite" {
+		user, err := cu.userRepository.GetByID(ctx, userID)
+		if err != nil {
+			return nil, err
+		}
+
+		if user.Favourite == nil {
+			user.Favourite = make([]string, 0)
+		}
+
+		filter = bson.M{
+			"_id": bson.M{
+				"$in": user.Favourite,
+			},
+		}
+	}
+
 	opts := database.FindOptions{
 		Limit:  int64(count),
 		Skip:   int64(offset),
-		SortBy: sort_by,
+		SortBy: sortBy,
 	}
 
 	collections, err := cu.collectionRepository.GetByFilter(ctx, filter, opts)
-	if err == nil && len(collections) == 0 {
+	if err == nil && len(collections) == 0 && category != "favourite" {
 		filter = bson.M{
 			"is_public": true,
 			"name": bson.Regex{

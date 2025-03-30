@@ -60,7 +60,7 @@ type CollectionUseCase interface {
 	GetByID(c context.Context, collectionID string) (Collection, error)
 	AddLike(c context.Context, collectionID string) (*Collection, error)
 	RemoveLike(c context.Context, collectionID string) (*Collection, error)
-	SearchPublic(c context.Context, text string, count int, offset int, sort_by string) ([]Collection, error)
+	SearchPublic(c context.Context, text string, count int, offset int, sortBy string, category string, userID string) ([]Collection, error)
 	SearchPublicByAuthor(c context.Context, author string) ([]Collection, error)
 	AddCard(c context.Context, collectionID string, card *Card) (Card, error)
 	DeleteCard(c context.Context, collectionID string, cardLocalID int) error
