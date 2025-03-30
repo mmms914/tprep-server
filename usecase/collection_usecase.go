@@ -146,11 +146,23 @@ func (cu *collectionUseCase) SearchPublic(c context.Context, text string, count 
 			user.Favourite = make([]string, 0)
 		}
 
-		filter = bson.M{
-			"_id": bson.M{
-				"$in": user.Favourite,
-			},
+		if text == "" {
+			filter = bson.M{
+				"_id": bson.M{
+					"$in": user.Favourite,
+				},
+			}
+		} else {
+			filter = bson.M{
+				"_id": bson.M{
+					"$in": user.Favourite,
+				},
+				"$text": bson.M{
+					"$search": text,
+				},
+			}
 		}
+
 	}
 
 	opts := database.FindOptions{
