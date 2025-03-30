@@ -57,7 +57,11 @@ func (cr *collectionRepository) GetByFilter(c context.Context, filter interface{
 	var results []domain.Collection
 	collections := cr.database.Collection(cr.collection)
 
-	op := options.Find().SetLimit(opts.Limit).SetSkip(opts.Skip)
+	op := options.Find()
+	if opts.SortBy != "" {
+		op = op.SetSort(bson.D{{opts.SortBy, -1}})
+	}
+	op = op.SetLimit(opts.Limit).SetSkip(opts.Skip)
 
 	cursor, err := collections.Find(c, filter, op)
 	if err != nil {

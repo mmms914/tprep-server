@@ -806,6 +806,13 @@ paths:
             schema:
               type: string
               example: математика 5 класс
+          - name: sort_by
+            in: query
+            required: false
+            description: если параметр не задан, возвращаются отсортированные по лайкам
+            schema:
+              type: string
+              example: likes или trainings
           - name: count
             in: query
             required: true
@@ -899,6 +906,122 @@ paths:
                       type: string
                       example: Not authorized
         
+      security:
+        - bearerAuth: []
+  /collection/{id}/like:
+    put:
+      tags:
+        - collection
+      summary: Поставить лайк колоде
+      description: Возможность поставить лайк если колода публичная или ты ее владелец. Возвращает текущее количество лайков
+      operationId: AddLike
+      parameters:
+        - name: id
+          description: ID колоды
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: успешная операция
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  likes:
+                    type: integer
+                    description: Текущее количество лайков
+                    example: 42
+        '404':
+          description: колоды не существует
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: There is no collection with this ID
+        '401':
+          description: токен недействителен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Not authorized
+        '403':
+            description: нет доступа к колоде
+            content:
+              apllication/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Collection is not public
+      security:
+        - bearerAuth: []
+  /collection/{id}/unlike:
+    put:
+      tags:
+        - collection
+      summary: убрать лайк с колоды
+      description: Возможность снять лайк. Возвращает текущее количество лайков
+      operationId: RemoveLike
+      parameters:
+        - name: id
+          description: ID колоды
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: успешная операция
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  likes:
+                    type: integer
+                    description: Текущее количество лайков
+                    example: 42
+        '404':
+          description: колоды не существует
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: There is no collection with this ID
+        '401':
+          description: токен недействителен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Not authorized
+        '403':
+            description: нет доступа к колоде
+            content:
+              apllication/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Collection is not public
       security:
         - bearerAuth: []
   /collection/{id}:
@@ -1206,6 +1329,12 @@ components:
         cards_count:
           type: integer
           example: 32
+        likes:
+          type: integer
+          example: 52
+        trainings:
+          type: integer
+          example: 527
     UserInfo:
       type: object
       properties:

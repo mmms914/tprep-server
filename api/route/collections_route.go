@@ -23,7 +23,7 @@ func NewCollectionRouter(env *bootstrap.Env, timeout time.Duration, db database.
 	cc := &controller.CollectionController{
 		CollectionUseCase: usecase.NewCollectionUseCase(cr, timeout),
 		UserUseCase:       usecase.NewUserUseCase(ur, us, timeout),
-		HistoryUseCase:    usecase.NewHistoryUseCase(uhr, chr, ur, timeout),
+		HistoryUseCase:    usecase.NewHistoryUseCase(uhr, chr, cr, ur, timeout),
 	}
 	r.Route("/collection", func(r chi.Router) {
 		r.Post("/", cc.Create)

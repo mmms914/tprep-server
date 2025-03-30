@@ -31,8 +31,9 @@ type UpdateResult struct {
 }
 
 type FindOptions struct {
-	Limit int64
-	Skip  int64
+	Limit  int64
+	Skip   int64
+	SortBy string
 }
 
 type Cursor interface {

@@ -50,11 +50,13 @@ func (cc *CollectionController) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	collectionInfo := domain.CollectionInfo{
-		ID:       collection.ID,
-		Name:     collection.Name,
-		IsPublic: collection.IsPublic,
-		Cards:    collection.Cards,
-		Author:   collection.Author,
+		ID:        collection.ID,
+		Name:      collection.Name,
+		IsPublic:  collection.IsPublic,
+		Cards:     collection.Cards,
+		Author:    collection.Author,
+		Likes:     collection.Likes,
+		Trainings: collection.Trainings,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -135,12 +137,13 @@ func (cc *CollectionController) AddLike(w http.ResponseWriter, r *http.Request) 
 	}
 
 	collectionInfo := domain.CollectionInfo{
-		ID:       collection.ID,
-		Name:     collection.Name,
-		IsPublic: collection.IsPublic,
-		Cards:    collection.Cards,
-		Author:   collection.Author,
-		Likes:    collection.Likes,
+		ID:        collection.ID,
+		Name:      collection.Name,
+		IsPublic:  collection.IsPublic,
+		Cards:     collection.Cards,
+		Author:    collection.Author,
+		Likes:     collection.Likes,
+		Trainings: collection.Trainings,
 	}
 
 	err = cc.UserUseCase.AddCollection(r.Context(), userID, id, "favourite")
@@ -151,7 +154,8 @@ func (cc *CollectionController) AddLike(w http.ResponseWriter, r *http.Request) 
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(collectionInfo.Likes)
+	response := map[string]int{"likes": collectionInfo.Likes}
+	json.NewEncoder(w).Encode(response)
 }
 
 func (cc *CollectionController) RemoveLike(w http.ResponseWriter, r *http.Request) {
@@ -193,12 +197,13 @@ func (cc *CollectionController) RemoveLike(w http.ResponseWriter, r *http.Reques
 	}
 
 	collectionInfo := domain.CollectionInfo{
-		ID:       collection.ID,
-		Name:     collection.Name,
-		IsPublic: collection.IsPublic,
-		Cards:    collection.Cards,
-		Author:   collection.Author,
-		Likes:    collection.Likes,
+		ID:        collection.ID,
+		Name:      collection.Name,
+		IsPublic:  collection.IsPublic,
+		Cards:     collection.Cards,
+		Author:    collection.Author,
+		Likes:     collection.Likes,
+		Trainings: collection.Trainings,
 	}
 
 	err = cc.UserUseCase.DeleteCollection(r.Context(), userID, id, "favourite")
@@ -209,7 +214,8 @@ func (cc *CollectionController) RemoveLike(w http.ResponseWriter, r *http.Reques
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(collectionInfo.Likes)
+	response := map[string]int{"likes": collectionInfo.Likes}
+	json.NewEncoder(w).Encode(response)
 }
 
 func (cc *CollectionController) Get(w http.ResponseWriter, r *http.Request) {
@@ -228,12 +234,13 @@ func (cc *CollectionController) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	collectionInfo := domain.CollectionInfo{
-		ID:       collection.ID,
-		Name:     collection.Name,
-		IsPublic: collection.IsPublic,
-		Cards:    collection.Cards,
-		Author:   collection.Author,
-		Likes:    collection.Likes,
+		ID:        collection.ID,
+		Name:      collection.Name,
+		IsPublic:  collection.IsPublic,
+		Cards:     collection.Cards,
+		Author:    collection.Author,
+		Likes:     collection.Likes,
+		Trainings: collection.Trainings,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -293,8 +300,17 @@ func (cc *CollectionController) Search(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, jsonError("Invalid offset"), http.StatusBadRequest)
 		return
 	}
+	sort_by := queryParams.Get("sort_by")
 
-	collections, err = cc.CollectionUseCase.SearchPublic(r.Context(), name, count, offset)
+	if sort_by != "likes" && sort_by != "trainings" && sort_by != "" {
+		http.Error(w, jsonError("invalid sort method"), http.StatusBadRequest)
+		return
+	}
+	if sort_by == "" {
+		sort_by = "likes"
+	}
+
+	collections, err = cc.CollectionUseCase.SearchPublic(r.Context(), name, count, offset, sort_by)
 
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
@@ -313,6 +329,8 @@ func (cc *CollectionController) Search(w http.ResponseWriter, r *http.Request) {
 			Name:       c.Name,
 			IsPublic:   c.IsPublic,
 			CardsCount: len(c.Cards),
+			Likes:      c.Likes,
+			Trainings:  c.Trainings,
 		})
 		cnt++
 	}

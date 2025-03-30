@@ -11,13 +11,15 @@ import (
 type historyUseCase struct {
 	userHistoryRepository       domain.UserHistoryRepository
 	collectionHistoryRepository domain.CollectionHistoryRepository
+	collectionRepository        domain.CollectionRepository
 	userRepository              domain.UserRepository
 	contextTimeout              time.Duration
 }
 
-func NewHistoryUseCase(userHistoryRepository domain.UserHistoryRepository, collectionHistoryRepository domain.CollectionHistoryRepository, userRepository domain.UserRepository, timeout time.Duration) domain.HistoryUseCase {
+func NewHistoryUseCase(userHistoryRepository domain.UserHistoryRepository, collectionHistoryRepository domain.CollectionHistoryRepository, collectionRepository domain.CollectionRepository, userRepository domain.UserRepository, timeout time.Duration) domain.HistoryUseCase {
 	return &historyUseCase{
 		userHistoryRepository:       userHistoryRepository,
+		collectionRepository:        collectionRepository,
 		collectionHistoryRepository: collectionHistoryRepository,
 		userRepository:              userRepository,
 		contextTimeout:              timeout,
@@ -56,6 +58,14 @@ func (hu *historyUseCase) AddTraining(c context.Context, userID string, historyI
 		CorrectCards:   historyItem.CorrectCards,
 		IncorrectCards: historyItem.IncorrectCards,
 		AllCardsCount:  historyItem.AllCardsCount,
+	}
+
+	update = bson.D{
+		{"$inc", bson.D{{"trainings", 1}}},
+	}
+	_, err = hu.collectionRepository.UpdateByID(ctx, historyItem.CollectionID, update)
+	if err != nil {
+		return err
 	}
 
 	return hu.collectionHistoryRepository.UpdateByID(ctx, historyItem.CollectionID, smallHistoryItem)

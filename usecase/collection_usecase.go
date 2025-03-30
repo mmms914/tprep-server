@@ -75,18 +75,15 @@ func (cu *collectionUseCase) RemoveLike(c context.Context, collectionID string) 
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
 
-	// Сначала получаем текущее состояние коллекции
 	current, err := cu.collectionRepository.GetByID(ctx, collectionID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Если лайков уже 0, просто возвращаем текущее состояние
 	if current.Likes <= 0 {
 		return &current, nil
 	}
 
-	// Обновляем только если лайков > 0
 	update := bson.D{
 		{"$inc", bson.D{{"likes", -1}}},
 	}
@@ -119,7 +116,7 @@ func (cu *collectionUseCase) GetByID(c context.Context, collectionID string) (do
 	return cu.collectionRepository.GetByID(ctx, collectionID)
 }
 
-func (cu *collectionUseCase) SearchPublic(c context.Context, text string, count int, offset int) ([]domain.Collection, error) {
+func (cu *collectionUseCase) SearchPublic(c context.Context, text string, count int, offset int, sort_by string) ([]domain.Collection, error) {
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
 
@@ -138,8 +135,9 @@ func (cu *collectionUseCase) SearchPublic(c context.Context, text string, count 
 	}
 
 	opts := database.FindOptions{
-		Limit: int64(count),
-		Skip:  int64(offset),
+		Limit:  int64(count),
+		Skip:   int64(offset),
+		SortBy: sort_by,
 	}
 
 	collections, err := cu.collectionRepository.GetByFilter(ctx, filter, opts)
