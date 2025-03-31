@@ -35,6 +35,7 @@ func (uc *UserController) Get(w http.ResponseWriter, r *http.Request) {
 			HasPicture:  user.HasPicture,
 			Collections: user.Collections,
 			Statistics:  user.Statistics,
+			Favourite:   user.Favourite,
 		}
 		if user.Collections == nil {
 			userInfo.Collections = make([]string, 0)
