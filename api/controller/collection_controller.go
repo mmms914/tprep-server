@@ -611,6 +611,23 @@ func (cc *CollectionController) UploadCardPicture(w http.ResponseWriter, r *http
 		return
 	}
 
+	// check if attachment already is
+	coll, err := cc.CollectionUseCase.GetByID(r.Context(), id)
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusNotFound)
+		return
+	}
+
+	for _, elem := range coll.Cards {
+		if elem.LocalID == cardID {
+			if elem.Attachment != "" {
+				cc.CollectionUseCase.RemoveCardPicture(r.Context(), userID, id, cardID, elem.Attachment)
+			}
+			break
+		}
+	}
+	//
+
 	objectName, err := cc.CollectionUseCase.UploadCardPhoto(r.Context(), userID, id, cardID, file, handler.Size)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
