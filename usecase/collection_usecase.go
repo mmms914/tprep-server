@@ -4,20 +4,25 @@ import (
 	"context"
 	"errors"
 	"go.mongodb.org/mongo-driver/v2/bson"
+	"io"
 	"main/database"
 	"main/domain"
+	"slices"
+	"strconv"
 	"time"
 )
 
 type collectionUseCase struct {
 	collectionRepository domain.CollectionRepository
+	collectionStorage    domain.CollectionStorage
 	userRepository       domain.UserRepository
 	contextTimeout       time.Duration
 }
 
-func NewCollectionUseCase(collectionRepository domain.CollectionRepository, userRepository domain.UserRepository, timeout time.Duration) domain.CollectionUseCase {
+func NewCollectionUseCase(collectionRepository domain.CollectionRepository, collectionStorage domain.CollectionStorage, userRepository domain.UserRepository, timeout time.Duration) domain.CollectionUseCase {
 	return &collectionUseCase{
 		collectionRepository: collectionRepository,
+		collectionStorage:    collectionStorage,
 		userRepository:       userRepository,
 		contextTimeout:       timeout,
 	}
@@ -211,6 +216,9 @@ func (cu *collectionUseCase) AddCard(c context.Context, collectionID string, car
 	}
 
 	card.LocalID = collection.MaxId
+	if card.OtherAnswers.Items == nil {
+		card.OtherAnswers.Items = make([]string, 0)
+	}
 	update := bson.D{
 		{"$push", bson.D{
 			{"cards", card},
@@ -221,9 +229,11 @@ func (cu *collectionUseCase) AddCard(c context.Context, collectionID string, car
 	}
 
 	answer := domain.Card{
-		LocalID:  card.LocalID,
-		Question: card.Question,
-		Answer:   card.Answer,
+		LocalID:      card.LocalID,
+		Question:     card.Question,
+		Answer:       card.Answer,
+		Attachment:   card.Attachment,
+		OtherAnswers: card.OtherAnswers,
 	}
 
 	_, err = cu.collectionRepository.UpdateByID(ctx, collectionID, update)
@@ -234,22 +244,31 @@ func (cu *collectionUseCase) DeleteCard(c context.Context, collectionID string, 
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
 
-	update := bson.D{
-		{"$pull", bson.D{
-			{"cards", bson.D{
-				{"local_id", cardLocalID},
-			}},
-		}},
-	}
-	res, err := cu.collectionRepository.UpdateByID(ctx, collectionID, update)
+	coll, err := cu.collectionRepository.GetByID(ctx, collectionID)
 	if err != nil {
 		return err
 	}
 
-	if res.MatchedCount == 0 {
-		return errors.New("card not exists")
+	for _, elem := range coll.Cards {
+		if elem.LocalID == cardLocalID {
+
+			update := bson.D{
+				{"$pull", bson.D{
+					{"cards", bson.D{
+						{"local_id", cardLocalID},
+					}},
+				}},
+			}
+			_, err := cu.collectionRepository.UpdateByID(ctx, collectionID, update)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		}
 	}
-	return nil
+
+	return errors.New("Card not exists")
 }
 
 func (cu *collectionUseCase) UpdateCard(c context.Context, collectionID string, card *domain.Card) error {
@@ -261,10 +280,15 @@ func (cu *collectionUseCase) UpdateCard(c context.Context, collectionID string, 
 		{"cards.local_id", card.LocalID},
 	}
 
+	if card.OtherAnswers.Items == nil {
+		card.OtherAnswers.Items = make([]string, 0)
+	}
+
 	update := bson.D{
 		{"$set", bson.D{
 			{"cards.$.question", card.Question},
 			{"cards.$.answer", card.Answer},
+			{"cards.$.other_answers", card.OtherAnswers},
 		}},
 	}
 	res, err := cu.collectionRepository.Update(ctx, filter, update)
@@ -276,4 +300,109 @@ func (cu *collectionUseCase) UpdateCard(c context.Context, collectionID string, 
 		return errors.New("card not exists")
 	}
 	return nil
+}
+
+func (cu *collectionUseCase) GetCardPhoto(c context.Context, objectName string) ([]byte, error) {
+	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
+	defer cancel()
+
+	return cu.collectionStorage.GetObject(ctx, objectName)
+}
+
+func (cu *collectionUseCase) UploadCardPhoto(c context.Context, userID string, collectionID string, cardID int, picture io.Reader, size int64) (string, error) {
+	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
+	defer cancel()
+
+	user, err := cu.userRepository.GetByID(ctx, userID)
+	if err != nil {
+		return "", err
+	}
+
+	if user.Limits.TotalFileSize+int(size) > domain.MAX_TOTAL_FILE_SIZE {
+		return "", errors.New("you reached the total file size limit")
+	}
+
+	if !slices.Contains(user.Collections, collectionID) {
+		return "", errors.New("access denied")
+	}
+
+	user.Limits.TotalFileSize += int(size)
+
+	update := bson.D{
+		{"$set", bson.D{
+			{"limits", user.Limits},
+		}},
+	}
+
+	err = cu.userRepository.UpdateByID(ctx, userID, update)
+	if err != nil {
+		return "", err
+	}
+
+	objectName := collectionID + "_" + strconv.Itoa(cardID) + "_" + strconv.FormatInt(time.Now().Unix(), 10)
+	err = cu.collectionStorage.PutObject(ctx, objectName, picture, size)
+	if err != nil {
+		return "", err
+	}
+
+	filter := bson.D{
+		{"_id", collectionID},
+		{"cards.local_id", cardID},
+	}
+
+	update = bson.D{
+		{"$set", bson.D{
+			{"cards.$.attachment", objectName},
+		}},
+	}
+
+	_, err = cu.collectionRepository.Update(ctx, filter, update)
+	if err != nil {
+		return "", err
+	}
+
+	return objectName, nil
+}
+
+func (cu *collectionUseCase) RemoveCardPicture(c context.Context, userID, collectionID string, cardID int, objectName string) error {
+	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
+	defer cancel()
+
+	obj, err := cu.collectionStorage.GetObject(ctx, objectName)
+	if err != nil {
+		return errors.New("Card picture not exists")
+	}
+
+	// update card in collection
+	filter := bson.D{
+		{"_id", collectionID},
+		{"cards.local_id", cardID},
+	}
+
+	update := bson.D{
+		{"$set", bson.D{
+			{"cards.$.attachment", ""},
+		}},
+	}
+
+	_, err = cu.collectionRepository.Update(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+	//
+
+	// update user limits
+	update = bson.D{
+		{"$inc", bson.D{
+			{"limits.total_file_size", -len(obj)},
+		}},
+	}
+
+	err = cu.userRepository.UpdateByID(ctx, userID, update)
+	if err != nil {
+		return err
+	}
+	//
+
+	return cu.collectionStorage.RemoveObject(ctx, objectName)
 }

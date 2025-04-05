@@ -45,6 +45,18 @@ func NewStorage(env *Env) storage.Client {
 		}
 		slog.Infof("Created bucket %q\n", domain.UserBucket)
 	}
+
+	found, err = minioClient.BucketExists(ctx, domain.CollectionBucket)
+	if err != nil {
+		slog.Fatal(err)
+	}
+	if !found {
+		err = minioClient.MakeBucket(ctx, domain.CollectionBucket)
+		if err != nil {
+			slog.Fatal("Can't create bucket:", err)
+		}
+		slog.Infof("Created bucket %q\n", domain.CollectionBucket)
+	}
 	slog.Println("Connected to Minio")
 	return minioClient
 }

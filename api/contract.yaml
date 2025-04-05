@@ -257,7 +257,7 @@ paths:
       tags:
         - card
       summary: Создание карточки и ее добавление в колоду
-      description: Доступно только создателю колоды
+      description: Доступно только создателю колоды. Чтобы изменить поле attachment используются другие эндпоинты
       operationId: addCard
       parameters:
         - name: id
@@ -278,6 +278,17 @@ paths:
                   answer:
                     type: string
                     example: im ok
+                  other_answers:
+                    type: object
+                    properties:
+                      count: 
+                        type: integer
+                        example: 1
+                      items:
+                        type: array
+                        items: 
+                          type: string
+                        example: ["no ok"]
         
       responses:
         '201':
@@ -290,12 +301,26 @@ paths:
                   local_id:
                     type: integer
                     example: 0
-                  question: 
+                  question:
                     type: string
                     example: how are you?
                   answer:
                     type: string
                     example: im ok
+                  attachment:
+                    type: string
+                    example: ""
+                  other_answers:
+                    type: object
+                    properties:
+                      count: 
+                        type: integer
+                        example: 1
+                      items:
+                        type: array
+                        items: 
+                          type: string
+                        example: ["no ok"]
         '404':
           description: колоды не существует
           content:
@@ -333,7 +358,7 @@ paths:
       tags:
         - card
       summary: Изменение существующей карточки
-      description: Доступно только создателю колоды
+      description: Доступно только создателю колоды. Необходимо передавать все поля, кроме attachment - чтобы изменить поле attachment используются другие эндпоинты
       operationId: UpdateCard
       parameters:
         - name: id
@@ -347,7 +372,6 @@ paths:
           schema:
             type: integer
       requestBody:
-        description: вопрос и ответ
         content:
           application/json:
             schema:
@@ -355,10 +379,21 @@ paths:
                 properties:
                   question:
                     type: string
-                    example: kak porabotal?
+                    example: how are you?
                   answer:
                     type: string
-                    example: normik
+                    example: im ok
+                  other_answers:
+                    type: object
+                    properties:
+                      count: 
+                        type: integer
+                        example: 1
+                      items:
+                        type: array
+                        items: 
+                          type: string
+                        example: ["no ok"]
       responses:
         '200':
           description: успешная операция
@@ -406,7 +441,7 @@ paths:
         tags:
           - card
         summary: Удаление карточки из колоды
-        description: Доступно только создателю колоды
+        description: Доступно только создателю колоды. Если прикреплен attachment, он удаляется автоматически
         operationId: deleteCard
         parameters:
           - name: id
@@ -462,6 +497,201 @@ paths:
                       example: You are not the owner of this collection
         security:
           - bearerAuth: []
+  /collection/{id}/card/{cardID}/picture:
+    get:
+      tags:
+        - card
+      summary: Получение картинки карточки по object_name
+      description: Доступно только создателю колоды / всем, если колода публичная
+      operationId: GetCardPicture
+      parameters:
+        - name: id
+          in: path
+          required: true 
+          schema:
+            type: string
+        - name: cardID
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: object_name
+          in: query
+          required: true
+          schema:
+            type: string
+            example: 184911a8-6b72-4ca8-aa30-17e2c5e27239
+      responses:
+        '200':
+          description: успешная операция
+          content:
+            image/jpeg:
+              schema:
+                example: бинарные данные
+
+        '404':
+          description: колоды не существует
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: There is no collection with this ID
+        '401':
+          description: токен недействителен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Not authorized
+        '403':
+            description: нет доступа к колоде
+            content:
+              apllication/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Access denied
+      security:
+        - bearerAuth: []
+    put:
+      tags:
+        - card
+      summary: Загрузка картинки в колоду
+      description: Доступно только создателю колоды. Поле attachment карточки обновляется на новый объект автоматически
+      operationId: UploadCardPicture
+      parameters:
+        - name: id
+          in: path
+          required: true 
+          schema:
+            type: string
+        - name: cardID
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: успешная операция
+          content:
+            image/jpeg:
+              schema:
+                $ref: "#/components/schemas/PictureUploaded"
+        '404':
+          description: колоды не существует
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: There is no collection with this ID
+        '401':
+          description: токен недействителен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Not authorized
+        '403':
+            description: нет доступа к колоде
+            content:
+              apllication/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Access denied
+      security:
+        - bearerAuth: []
+    delete:
+      tags:
+        - card
+      summary: Удаление картинки для карточки
+      description: Доступно только создателю колоды. Поле attachment карточки обновляется на пустое автоматически
+      operationId: DeleteCardPicture
+      parameters:
+        - name: id
+          in: path
+          required: true 
+          schema:
+            type: string
+        - name: cardID
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: object_name
+          in: query
+          required: true
+          schema:
+            type: string
+            example: 184911a8-6b72-4ca8-aa30-17e2c5e27239
+      responses:
+        '200':
+          description: успешная операция
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Card picture deleted
+        '404':
+          description: колоды не существует
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Card picture not exists
+        '401':
+          description: токен недействителен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Not authorized
+        '403':
+            description: нет доступа к колоде
+            content:
+              apllication/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Access denied
+      security:
+        - bearerAuth: []
   /user:
     get:
       tags:
@@ -1156,7 +1386,7 @@ paths:
       tags:
         - collection
       summary: Удаление колоды
-      description: Доступно только создателю
+      description: Доступно только создателю. Вложения в карточки удаляются автоматически
       operationId: deleteCollection
       parameters:
         - name: id
@@ -1224,6 +1454,20 @@ components:
         answer:
           type: string
           example: Cox-Zucker
+        attachment:
+          type: string
+          example: 184911a8-6b72-4ca8-aa30-17e2c5e27239_4_1743853284
+        other_answers:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 1
+            items:
+              type: array
+              items:
+                type: string
+              example: ["неправильный ответ"]
     HistoryItem:
       type: object
       properties:
@@ -1313,11 +1557,21 @@ components:
             {
               "local_id": 1,
               "question": "What is ur name?",
-              "answer": "Cox-Zucker"
+              "answer": "Cox-Zucker",
+              "attachment": "",
+              "other_answers":{
+                "count": 0,
+                "items": []
+              }
             }, {
               "local_id": 2,
               "question": "whatsup",
-              "answer": "ok"
+              "answer": "ok",
+              "attachment": "fdafhsdjf_3123_123131",
+              "other_answers":{
+                "count": 1,
+                "items": ["no ok"]
+              }
             }
             ]
         likes:
@@ -1420,6 +1674,12 @@ components:
             medium_percentage:
               type: integer
               example: 99
+    PictureUploaded:
+      type: object
+      properties:
+        object_name: 
+          type: string
+          example: 184911a8-6b72-4ca8-aa30-17e2c5e27239
   requestBodies:
     CardWithoutID:
       content:
@@ -1483,6 +1743,7 @@ components:
                   type: array
                   items:
                     $ref: '#/components/schemas/RightItem'
+    
   securitySchemes:
     bearerAuth:
       type: http

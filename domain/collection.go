@@ -2,11 +2,13 @@ package domain
 
 import (
 	"context"
+	"io"
 	"main/database"
 )
 
 const (
 	CollectionCollection = "collections"
+	CollectionBucket     = "collections"
 )
 
 type Collection struct {
@@ -65,4 +67,13 @@ type CollectionUseCase interface {
 	AddCard(c context.Context, collectionID string, card *Card) (Card, error)
 	DeleteCard(c context.Context, collectionID string, cardLocalID int) error
 	UpdateCard(c context.Context, collectionID string, card *Card) error
+	GetCardPhoto(c context.Context, objectName string) ([]byte, error)
+	UploadCardPhoto(c context.Context, userID string, collectionID string, cardID int, picture io.Reader, size int64) (string, error)
+	RemoveCardPicture(c context.Context, userID string, collectionID string, cardID int, objectName string) error
+}
+
+type CollectionStorage interface {
+	GetObject(c context.Context, objectName string) ([]byte, error)
+	PutObject(c context.Context, objectName string, reader io.Reader, objectSize int64) error
+	RemoveObject(c context.Context, objectName string) error
 }

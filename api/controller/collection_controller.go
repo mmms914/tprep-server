@@ -5,7 +5,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"main/domain"
 	"net/http"
+	"slices"
 	"strconv"
+	"strings"
 )
 
 type CollectionController struct {
@@ -233,6 +235,12 @@ func (cc *CollectionController) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	for ind, elem := range collection.Cards {
+		if elem.OtherAnswers.Items == nil {
+			collection.Cards[ind].OtherAnswers.Items = make([]string, 0)
+		}
+	}
+
 	collectionInfo := domain.CollectionInfo{
 		ID:        collection.ID,
 		Name:      collection.Name,
@@ -262,6 +270,12 @@ func (cc *CollectionController) Delete(w http.ResponseWriter, r *http.Request) {
 	if coll.Author != userID {
 		http.Error(w, jsonError("You are not the owner of this collection"), http.StatusForbidden)
 		return
+	}
+
+	for _, elem := range coll.Cards {
+		if elem.Attachment != "" {
+			cc.CollectionUseCase.RemoveCardPicture(r.Context(), userID, id, elem.LocalID, elem.Attachment)
+		}
 	}
 
 	err = cc.CollectionUseCase.DeleteByID(r.Context(), id)
@@ -358,7 +372,7 @@ func (cc *CollectionController) CreateCard(w http.ResponseWriter, r *http.Reques
 		http.Error(w, jsonError(err.Error()), http.StatusBadRequest)
 		return
 	}
-	if card.Question == "" || card.Answer == "" {
+	if card.Question == "" || card.Answer == "" || card.OtherAnswers.Items == nil || card.OtherAnswers.Count != len(card.OtherAnswers.Items) {
 		http.Error(w, jsonError("Invalid body data"), http.StatusBadRequest)
 		return
 	}
@@ -396,7 +410,7 @@ func (cc *CollectionController) UpdateCard(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if card.Question == "" || card.Answer == "" {
+	if card.Question == "" || card.Answer == "" || card.OtherAnswers.Items == nil || card.OtherAnswers.Count != len(card.OtherAnswers.Items) {
 		http.Error(w, jsonError("Invalid body data"), http.StatusBadRequest)
 		return
 	}
@@ -453,6 +467,19 @@ func (cc *CollectionController) DeleteCard(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	for _, elem := range coll.Cards {
+		if elem.LocalID == cardID {
+			if elem.Attachment != "" {
+				err = cc.CollectionUseCase.RemoveCardPicture(r.Context(), userID, collectionID, cardID, elem.Attachment)
+				if err != nil {
+					http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+					return
+				}
+			}
+			break
+		}
+	}
+
 	err = cc.CollectionUseCase.DeleteCard(r.Context(), collectionID, cardID)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusNotFound)
@@ -500,5 +527,147 @@ func (cc *CollectionController) AddTraining(w http.ResponseWriter, r *http.Reque
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(domain.SuccessResponse{
 		Message: "History item successfully added",
+	})
+}
+
+func (cc *CollectionController) GetCardPicture(w http.ResponseWriter, r *http.Request) {
+	authID := r.Context().Value("x-user-id").(string)
+
+	queryParams := r.URL.Query()
+	objectName := queryParams.Get("object_name")
+
+	if objectName == "" || strings.Count(objectName, "_") != 2 {
+		http.Error(w, jsonError("Invalid object_name"), http.StatusBadRequest)
+		return
+	}
+
+	spl := strings.Split(objectName, "_")
+	collectionID := spl[0]
+
+	if collectionID != chi.URLParam(r, "id") {
+		http.Error(w, jsonError("invalid collection / object_name"), http.StatusBadRequest)
+		return
+	}
+
+	coll, err := cc.CollectionUseCase.GetByID(r.Context(), collectionID)
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusNotFound)
+		return
+	}
+
+	if coll.IsPublic == false {
+		user, err := cc.UserUseCase.GetByID(r.Context(), authID)
+		if err != nil {
+			http.Error(w, jsonError(err.Error()), http.StatusNotFound)
+			return
+		}
+
+		if !slices.Contains(user.Collections, collectionID) {
+			http.Error(w, jsonError("Access denied"), http.StatusForbidden)
+			return
+		}
+	}
+
+	fileBytes, err := cc.CollectionUseCase.GetCardPhoto(r.Context(), objectName)
+	if err != nil {
+		http.Error(w, jsonError("Card picture not found"), http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "image/jpeg")
+	w.WriteHeader(http.StatusOK)
+	w.Write(fileBytes)
+}
+
+func (cc *CollectionController) UploadCardPicture(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseMultipartForm(5 << 20)
+	if err != nil {
+		http.Error(w, jsonError("Error with file or its max size"), http.StatusBadRequest)
+		return
+	}
+
+	file, handler, err := r.FormFile("image")
+	if err != nil {
+		http.Error(w, "Error retrieving the file", http.StatusBadRequest)
+		return
+	}
+	defer file.Close()
+
+	if handler.Size > (5 << 20) {
+		http.Error(w, jsonError("Image's size should be less than 5 MB"), http.StatusBadRequest)
+		return
+	}
+
+	if !(strings.HasSuffix(handler.Filename, ".jpg") || strings.HasSuffix(handler.Filename, ".jpeg")) {
+		http.Error(w, jsonError("Image's extension should be JPG/JPEG"), http.StatusBadRequest)
+		return
+	}
+
+	userID := r.Context().Value("x-user-id").(string)
+	id := chi.URLParam(r, "id")
+	cardID, err := strconv.Atoi(chi.URLParam(r, "cardID"))
+	if err != nil {
+		http.Error(w, jsonError("Invalid path cardID"), http.StatusInternalServerError)
+		return
+	}
+
+	objectName, err := cc.CollectionUseCase.UploadCardPhoto(r.Context(), userID, id, cardID, file, handler.Size)
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(domain.UploadCardPhotoResult{
+		ObjectName: objectName,
+	})
+}
+
+func (cc *CollectionController) RemoveCardPicture(w http.ResponseWriter, r *http.Request) {
+	id := r.Context().Value("x-user-id").(string)
+	queryParams := r.URL.Query()
+	objectName := queryParams.Get("object_name")
+
+	collectionID := chi.URLParam(r, "id")
+	cardID, err := strconv.Atoi(chi.URLParam(r, "cardID"))
+	if err != nil {
+		http.Error(w, jsonError("Invalid path cardID"), http.StatusInternalServerError)
+		return
+	}
+
+	if objectName == "" || strings.Count(objectName, "_") != 2 {
+		http.Error(w, jsonError("Invalid object_name"), http.StatusBadRequest)
+		return
+	}
+
+	spl := strings.Split(objectName, "_")
+
+	if spl[0] != chi.URLParam(r, "id") {
+		http.Error(w, jsonError("invalid collection / object_name"), http.StatusBadRequest)
+		return
+	}
+
+	user, err := cc.UserUseCase.GetByID(r.Context(), id)
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusNotFound)
+		return
+	}
+
+	if !slices.Contains(user.Collections, collectionID) {
+		http.Error(w, jsonError("Access denied"), http.StatusBadRequest)
+		return
+	}
+
+	err = cc.CollectionUseCase.RemoveCardPicture(r.Context(), id, collectionID, cardID, objectName)
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(domain.SuccessResponse{
+		Message: "Card picture deleted",
 	})
 }

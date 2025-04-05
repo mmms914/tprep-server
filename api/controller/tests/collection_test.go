@@ -23,9 +23,11 @@ func TestCollection(t *testing.T) {
 	db := app.Mongo.Database(env.DBName)
 	defer app.CloseDBConnection()
 	timeout := time.Duration(env.ContextTimeout) * time.Second
+
 	ur := repository.NewUserRepository(db, domain.UserCollection)
 	uuc := usecase.NewUserUseCase(ur, timeout)
 	cr := repository.NewCollectionRepository(db, domain.CollectionCollection)
+
 	cc := &controller.CollectionController{
 		CollectionUseCase: usecase.NewCollectionUseCase(cr, timeout),
 		UserUseCase:       uuc,

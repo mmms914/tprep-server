@@ -17,8 +17,9 @@ type User struct {
 	Password    string         `bson:"password" json:"password"`
 	HasPicture  bool           `bson:"has_picture" json:"has_picture"`
 	Collections []string       `bson:"collections" json:"collections"`
-	Statistics  UserStatistics `bson:"statistics" json:"statistics"`
 	Favourite   []string       `bson:"favourite" json:"favourite"`
+	Statistics  UserStatistics `bson:"statistics" json:"statistics"`
+	Limits      UserLimits     `bson:"limits" json:"limits"`
 }
 
 type UserInfo struct {
