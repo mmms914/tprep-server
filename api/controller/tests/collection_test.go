@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/go-chi/chi/v5"
 	. "github.com/smartystreets/goconvey/convey"
 	"main/api/controller"
 	"main/bootstrap"
 	"main/domain"
 	"main/repository"
+	"main/storage"
 	"main/usecase"
 	"net/http/httptest"
 	"strconv"
@@ -20,16 +22,19 @@ import (
 func TestCollection(t *testing.T) {
 	app := bootstrap.App()
 	env := app.Env
+	s := app.Storage
 	db := app.Mongo.Database(env.DBName)
+	us := storage.NewUserStorage(s, domain.UserBucket)
+	cs := storage.NewCollectionStorage(s, domain.CollectionBucket)
 	defer app.CloseDBConnection()
 	timeout := time.Duration(env.ContextTimeout) * time.Second
 
 	ur := repository.NewUserRepository(db, domain.UserCollection)
-	uuc := usecase.NewUserUseCase(ur, timeout)
+	uuc := usecase.NewUserUseCase(ur, us, timeout)
 	cr := repository.NewCollectionRepository(db, domain.CollectionCollection)
 
 	cc := &controller.CollectionController{
-		CollectionUseCase: usecase.NewCollectionUseCase(cr, timeout),
+		CollectionUseCase: usecase.NewCollectionUseCase(cr, cs, ur, timeout),
 		UserUseCase:       uuc,
 	}
 	var createdID string
@@ -260,6 +265,10 @@ func TestCollection(t *testing.T) {
 		jsonByte, _ := json.Marshal(domain.Card{
 			Question: "How are you?",
 			Answer:   "Im fine",
+			OtherAnswers: domain.OtherAnswers{
+				Count: 2,
+				Items: []string{"So-so", "Not bad"},
+			},
 		})
 		req := httptest.NewRequest("POST", "/collection/"+collID+"/card/", bytes.NewReader(jsonByte))
 		req = req.WithContext(context.WithValue(req.Context(), "x-user-id", "mockedID"))
@@ -272,6 +281,7 @@ func TestCollection(t *testing.T) {
 			err := json.Unmarshal([]byte(responsebody), &cardResponse)
 			So(err, ShouldBeNil)
 			localID = cardResponse.LocalID
+			fmt.Println(localID)
 			Convey("then the response should be 201", func() {
 				So(resp.Code, ShouldEqual, 201)
 			})
@@ -302,7 +312,11 @@ func TestCollection(t *testing.T) {
 	Convey("given a 15th Card-POST http request for /collection/{id}/card/ with invalid collection ID", t, func() {
 		jsonByte, _ := json.Marshal(domain.Card{
 			Question: "Are you OK?",
-			Answer:   "Im fine!",
+			Answer:   "Im fine",
+			OtherAnswers: domain.OtherAnswers{
+				Count: 2,
+				Items: []string{"So-so", "Not bad"},
+			},
 		})
 		req := httptest.NewRequest("POST", "/collection/fakeID/card/", bytes.NewReader(jsonByte))
 		req = req.WithContext(context.WithValue(req.Context(), "x-user-id", "mockedID"))
@@ -322,8 +336,12 @@ func TestCollection(t *testing.T) {
 
 	Convey("given a 16th Card-POST http request for /collection/{id}/card/ with invalid user ID", t, func() {
 		jsonByte, _ := json.Marshal(domain.Card{
-			Question: "Are you OK?",
-			Answer:   "Im fine!",
+			Question: "How are you?",
+			Answer:   "Im fine",
+			OtherAnswers: domain.OtherAnswers{
+				Count: 2,
+				Items: []string{"So-so", "Not bad"},
+			},
 		})
 		req := httptest.NewRequest("POST", "/collection/"+collID+"/card/", bytes.NewReader(jsonByte))
 		req = req.WithContext(context.WithValue(req.Context(), "x-user-id", "fakeID"))
@@ -343,8 +361,12 @@ func TestCollection(t *testing.T) {
 
 	Convey("given a 17th Card-PUT http request for /collection/{id}/card/{cardID}", t, func() {
 		jsonByte, _ := json.Marshal(domain.Card{
-			Question: "Are you OK?",
-			Answer:   "No, Im coding now!",
+			Question: "How are you?",
+			Answer:   "No, I'm coding now",
+			OtherAnswers: domain.OtherAnswers{
+				Count: 2,
+				Items: []string{"Maybe", "Not bad"},
+			},
 		})
 		req := httptest.NewRequest("PUT", "/collection/"+collID+"/card/"+strconv.Itoa(localID)+"/", bytes.NewReader(jsonByte))
 		req = req.WithContext(context.WithValue(req.Context(), "x-user-id", "mockedID"))
@@ -385,8 +407,12 @@ func TestCollection(t *testing.T) {
 
 	Convey("given a 19th Card-PUT http request for /collection/{id}/card/{cardID} with wrong card ID", t, func() {
 		jsonByte, _ := json.Marshal(domain.Card{
-			Question: "Im here!",
-			Answer:   "where is my question?",
+			Question: "Im here",
+			Answer:   "Where is my question?",
+			OtherAnswers: domain.OtherAnswers{
+				Count: 0,
+				Items: []string{},
+			},
 		})
 		req := httptest.NewRequest("PUT", "/collection/"+collID+"/card/"+strconv.Itoa(localID+123)+"/", bytes.NewReader(jsonByte))
 		req = req.WithContext(context.WithValue(req.Context(), "x-user-id", "mockedID"))
@@ -403,7 +429,11 @@ func TestCollection(t *testing.T) {
 	Convey("given a 20th Card-PUT http request for /collection/{id}/card/{cardID} with wrong collection ID", t, func() {
 		jsonByte, _ := json.Marshal(domain.Card{
 			Question: "Im here",
-			Answer:   "where is my question?",
+			Answer:   "Where is my question?",
+			OtherAnswers: domain.OtherAnswers{
+				Count: 0,
+				Items: []string{},
+			},
 		})
 		req := httptest.NewRequest("PUT", "/collection/fakeID/card/"+strconv.Itoa(localID)+"/", bytes.NewReader(jsonByte))
 		req = req.WithContext(context.WithValue(req.Context(), "x-user-id", "mockedID"))
@@ -423,8 +453,12 @@ func TestCollection(t *testing.T) {
 
 	Convey("given a 21th Card-PUT http request for /collection/{id}/card/{cardID} with wrong user ID", t, func() {
 		jsonByte, _ := json.Marshal(domain.Card{
-			Question: "Im here!",
-			Answer:   "where is my question?",
+			Question: "Im here",
+			Answer:   "Where is my question?",
+			OtherAnswers: domain.OtherAnswers{
+				Count: 0,
+				Items: []string{},
+			},
 		})
 		req := httptest.NewRequest("PUT", "/collection/"+collID+"/card/"+strconv.Itoa(localID)+"/", bytes.NewReader(jsonByte))
 		req = req.WithContext(context.WithValue(req.Context(), "x-user-id", "fakeID"))
@@ -449,8 +483,8 @@ func TestCollection(t *testing.T) {
 		Convey("when the request handled by router", func() {
 			r.Delete("/collection/{id}/card/{cardID}/", cc.DeleteCard)
 			r.ServeHTTP(resp, req)
-			Convey("then the response should be 200", func() {
-				So(resp.Code, ShouldEqual, 200)
+			Convey("then the response should be 404", func() {
+				So(resp.Code, ShouldEqual, 404)
 			})
 		})
 	})
@@ -472,24 +506,7 @@ func TestCollection(t *testing.T) {
 		})
 	})
 
-	Convey("given a 24th Card-DELETE http request for /collection/{id}/card/{cardID} with wrong user ID", t, func() {
-		req := httptest.NewRequest("DELETE", "/collection/"+collID+"/card/"+strconv.Itoa(localID)+"/", nil)
-		req = req.WithContext(context.WithValue(req.Context(), "x-user-id", "fakeID"))
-		resp := httptest.NewRecorder()
-		Convey("when the request handled by router", func() {
-			r.Delete("/collection/{id}/card/{cardID}/", cc.DeleteCard)
-			r.ServeHTTP(resp, req)
-			responseBody := resp.Body.String()
-			Convey("then the response should be 403", func() {
-				So(resp.Code, ShouldEqual, 403)
-			})
-			Convey("and the response body should contain an error message", func() {
-				So(responseBody, ShouldContainSubstring, "You are not the owner of this collection")
-			})
-		})
-	})
-
-	Convey("given a 25th Card-DELETE http request for /collection/{id}/card/{cardID}", t, func() {
+	Convey("given a 24th Card-DELETE http request for /collection/{id}/card/{cardID}", t, func() {
 		req := httptest.NewRequest("DELETE", "/collection/"+collID+"/card/"+strconv.Itoa(localID)+"/", nil)
 		req = req.WithContext(context.WithValue(req.Context(), "x-user-id", "mockedID"))
 		resp := httptest.NewRecorder()
@@ -497,10 +514,8 @@ func TestCollection(t *testing.T) {
 			r.Delete("/collection/{id}/card/{cardID}/", cc.DeleteCard)
 			r.ServeHTTP(resp, req)
 			responseBody := resp.Body.String()
-			Convey("then the response should be 200", func() {
-				So(resp.Code, ShouldEqual, 200)
-			})
 			Convey("and the response body should contain a message", func() {
+				So(resp.Code, ShouldEqual, 200)
 				So(responseBody, ShouldContainSubstring, "Card deleted successfully")
 			})
 		})

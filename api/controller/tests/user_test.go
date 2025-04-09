@@ -10,6 +10,7 @@ import (
 	"main/bootstrap"
 	"main/domain"
 	"main/repository"
+	"main/storage"
 	"main/usecase"
 	"net/http/httptest"
 	"testing"
@@ -19,12 +20,14 @@ import (
 func TestUser(t *testing.T) {
 	app := bootstrap.App()
 	env := app.Env
+	s := app.Storage
+	us := storage.NewUserStorage(s, domain.UserBucket)
 	db := app.Mongo.Database(env.DBName)
 	defer app.CloseDBConnection()
 	timeout := time.Duration(env.ContextTimeout) * time.Second
 	ur := repository.NewUserRepository(db, domain.UserCollection)
 	uc := &controller.UserController{
-		UserUseCase: usecase.NewUserUseCase(ur, timeout),
+		UserUseCase: usecase.NewUserUseCase(ur, us, timeout),
 	}
 	r := chi.NewRouter()
 	userID := "69a9f624-41e9-4818-bbd4-6af79644dbd1" // mocked user ID

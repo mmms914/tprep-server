@@ -244,31 +244,22 @@ func (cu *collectionUseCase) DeleteCard(c context.Context, collectionID string, 
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
 
-	coll, err := cu.collectionRepository.GetByID(ctx, collectionID)
+	update := bson.D{
+		{"$pull", bson.D{
+			{"cards", bson.D{
+				{"local_id", cardLocalID},
+			}},
+		}},
+	}
+	res, err := cu.collectionRepository.UpdateByID(ctx, collectionID, update)
 	if err != nil {
 		return err
 	}
-
-	for _, elem := range coll.Cards {
-		if elem.LocalID == cardLocalID {
-
-			update := bson.D{
-				{"$pull", bson.D{
-					{"cards", bson.D{
-						{"local_id", cardLocalID},
-					}},
-				}},
-			}
-			_, err := cu.collectionRepository.UpdateByID(ctx, collectionID, update)
-			if err != nil {
-				return err
-			}
-
-			return nil
-		}
+	if res.ModifiedCount == 0 {
+		return errors.New("Card not exists")
 	}
 
-	return errors.New("Card not exists")
+	return nil
 }
 
 func (cu *collectionUseCase) UpdateCard(c context.Context, collectionID string, card *domain.Card) error {

@@ -18,6 +18,7 @@ type Collection interface {
 	InsertOne(context.Context, interface{}) (string, error)
 	DeleteOne(context.Context, interface{}) (int64, error)
 	UpdateOne(context.Context, interface{}, interface{}, ...options.Lister[options.UpdateOptions]) (UpdateResult, error)
+	UpdateMany(context.Context, interface{}, interface{}, ...options.Lister[options.UpdateOptions]) (UpdateResult, error)
 	ReplaceOne(context.Context, interface{}, interface{}, ...options.Lister[options.ReplaceOptions]) (UpdateResult, error)
 }
 
@@ -98,6 +99,19 @@ func (mc *mongoCollection) Find(ctx context.Context, filter interface{}, opts ..
 
 func (mc *mongoCollection) UpdateOne(ctx context.Context, filter interface{}, update interface{}, opts ...options.Lister[options.UpdateOptions]) (UpdateResult, error) {
 	res, err := mc.coll.UpdateOne(ctx, filter, update, opts[:]...)
+	if err != nil {
+		return UpdateResult{}, err
+	}
+
+	ur := UpdateResult{
+		MatchedCount:  res.MatchedCount,
+		ModifiedCount: res.ModifiedCount,
+	}
+	return ur, nil
+}
+
+func (mc *mongoCollection) UpdateMany(ctx context.Context, filter interface{}, update interface{}, opts ...options.Lister[options.UpdateOptions]) (UpdateResult, error) {
+	res, err := mc.coll.UpdateMany(ctx, filter, update, opts[:]...)
 	if err != nil {
 		return UpdateResult{}, err
 	}
