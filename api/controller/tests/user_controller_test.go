@@ -341,3 +341,43 @@ func TestUserController_Update_Success(t *testing.T) {
 	assert.Equal(t, "User updated", response.Message)
 	mockUseCase.AssertExpectations(t)
 }
+
+func TestUserController_Update_EmptyFields(t *testing.T) {
+	mockUseCase := new(mocks.UserUseCase)
+	controller := &controller.UserController{
+		UserUseCase: mockUseCase,
+	}
+
+	testCases := []struct {
+		name string
+		user domain.User
+	}{
+		{
+			name: "Empty Username",
+			user: domain.User{
+				Username: "",
+				Email:    "valid@example.com",
+			},
+		},
+		{
+			name: "Empty Email",
+			user: domain.User{
+				Username: "valid_username",
+				Email:    "",
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			bodyJSON, _ := json.Marshal(tc.user)
+			req := httptest.NewRequest(http.MethodPut, "/user/{id}", strings.NewReader(string(bodyJSON)))
+			rr := httptest.NewRecorder()
+			controller.Update(rr, req)
+			res := rr.Result()
+			defer res.Body.Close()
+
+			assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+			assert.Contains(t, rr.Body.String(), "Invalid data")
+		})
+	}
+}
