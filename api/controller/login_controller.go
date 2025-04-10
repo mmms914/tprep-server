@@ -30,7 +30,7 @@ func (lc *LoginController) Login(w http.ResponseWriter, r *http.Request) {
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password))
 	if err != nil {
-		http.Error(w, jsonError("Invalid credentials"), http.StatusInternalServerError)
+		http.Error(w, jsonError("Invalid credentials"), http.StatusBadRequest)
 		return
 	}
 
