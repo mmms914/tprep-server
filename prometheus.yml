@@ -1,12 +1,17 @@
 global:
-  scrape_interval:     30s # By default, scrape targets every 15 seconds.
-  evaluation_interval: 30s # By default, scrape targets every 15 seconds.
+  scrape_interval: 30s
+  evaluation_interval: 30s
 
 scrape_configs:
   - job_name: 'tprep-server'
-
     scrape_interval: 30s
     scrape_timeout: 30s
-
     static_configs:
       - targets: ['tprep-server:3000']
+
+  - job_name: minio-job
+    bearer_token: eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJwcm9tZXRoZXVzIiwic3ViIjoiSmM0MlNpVTB1U1JtaWtrZ3g5RFEiLCJleHAiOjQ4OTc5NzcyMDV9.aumHcNR5Z0DPUccUS99K6C9VkeCeVRWQ7FjHJQ0B_7mvPeU_WAA9GM3YKdUYhYtemUt8nq2HhjVKMaX30lrnLw
+    metrics_path: /minio/v2/metrics/cluster
+    scheme: http
+    static_configs:
+      - targets: [ 'minio:9000' ]
