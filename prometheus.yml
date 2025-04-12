@@ -10,7 +10,7 @@ scrape_configs:
       - targets: ['tprep-server:3000']
 
   - job_name: minio-job
-    bearer_token: eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJwcm9tZXRoZXVzIiwic3ViIjoiSmM0MlNpVTB1U1JtaWtrZ3g5RFEiLCJleHAiOjQ4OTc5NzcyMDV9.aumHcNR5Z0DPUccUS99K6C9VkeCeVRWQ7FjHJQ0B_7mvPeU_WAA9GM3YKdUYhYtemUt8nq2HhjVKMaX30lrnLw
+    bearer_token: eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJwcm9tZXRoZXVzIiwic3ViIjoidEtVSFNQTXFsSGZJeVhlTmpzaVEiLCJleHAiOjQ4OTgwMjkzMjh9.DalQ7pMi4Fs4Qej7wxcG4_CkY1u0OY_R1IOwP-iF7meSHcn1WQ0Flz89UBp0D-ESYXZcuRUKfQXQyMv9j_2HuA
     metrics_path: /minio/v2/metrics/cluster
     scheme: http
     static_configs:
