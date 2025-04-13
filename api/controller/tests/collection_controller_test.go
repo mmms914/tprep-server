@@ -156,7 +156,7 @@ func TestCollectionController_Update_NotFound(t *testing.T) {
 
 }
 
-func TestCollection_Controller_Update_NotAuthor(t *testing.T) {
+func TestCollectionController_Update_NotAuthor(t *testing.T) {
 	mockCollUseCase := new(mocks.CollectionUseCase)
 	controller := &controller.CollectionController{
 		CollectionUseCase: mockCollUseCase,
@@ -179,4 +179,106 @@ func TestCollection_Controller_Update_NotAuthor(t *testing.T) {
 	var resp domain.SuccessResponse
 	assert.NoError(t, json.NewDecoder(rr.Body).Decode(&resp))
 	assert.Contains(t, "You are not the owner of this collection", resp.Message)
+}
+
+func TestCollectionController_Delete_Success(t *testing.T) {
+	mockCollUseCase := new(mocks.CollectionUseCase)
+	mockUserUseCase := new(mocks.UserUseCase)
+	controller := &controller.CollectionController{
+		CollectionUseCase: mockCollUseCase,
+		UserUseCase:       mockUserUseCase,
+	}
+	userID := "user-id"
+	collID := "coll-id"
+	collection := domain.Collection{
+		ID:     collID,
+		Author: userID,
+		Cards: []domain.Card{
+			{LocalID: 1, Attachment: "pic.jpg"},
+		},
+	}
+	mockCollUseCase.On("GetByID", mock.Anything, collID).Return(collection, nil)
+	mockCollUseCase.On("RemoveCardPicture", mock.Anything, userID, collID, 1, "pic.jpg").Return(nil)
+	mockCollUseCase.On("DeleteByID", mock.Anything, collID).Return(nil)
+	mockUserUseCase.On("DeleteCollection", mock.Anything, userID, collID, "collections").Return(nil)
+
+	req := httptest.NewRequest(http.MethodDelete, "/collection/{id}", nil)
+	req = req.WithContext(context.WithValue(req.Context(), "x-user-id", userID))
+	chiCtx := chi.NewRouteContext()
+	chiCtx.URLParams.Add("id", collID)
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, chiCtx))
+	rr := httptest.NewRecorder()
+	controller.Delete(rr, req)
+	res := rr.Result()
+	defer res.Body.Close()
+
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+	var resp domain.SuccessResponse
+	assert.NoError(t, json.NewDecoder(res.Body).Decode(&resp))
+	assert.Contains(t, resp.Message, "Collection deleted successfully")
+
+	mockCollUseCase.AssertExpectations(t)
+	mockUserUseCase.AssertExpectations(t)
+}
+
+func TestCollectionController_Delete_NotFound(t *testing.T) {
+	mockCollUseCase := new(mocks.CollectionUseCase)
+	controller := &controller.CollectionController{
+		CollectionUseCase: mockCollUseCase,
+	}
+
+	userID := "user-id"
+	collID := "wrong-id"
+
+	mockCollUseCase.On("GetByID", mock.Anything, collID).Return(domain.Collection{}, errors.New("not found"))
+
+	req := httptest.NewRequest(http.MethodDelete, "/collections/{id}", nil)
+	req = req.WithContext(context.WithValue(req.Context(), "x-user-id", userID))
+	chiCtx := chi.NewRouteContext()
+	chiCtx.URLParams.Add("id", collID)
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, chiCtx))
+
+	rr := httptest.NewRecorder()
+	controller.Delete(rr, req)
+
+	res := rr.Result()
+	defer res.Body.Close()
+
+	assert.Equal(t, http.StatusNotFound, res.StatusCode)
+	var resp domain.SuccessResponse
+	assert.NoError(t, json.NewDecoder(res.Body).Decode(&resp))
+	assert.Contains(t, resp.Message, "There is no collection with this ID")
+}
+
+func TestCollectionController_Delete_NotAuthor(t *testing.T) {
+	mockCollUseCase := new(mocks.CollectionUseCase)
+	controller := &controller.CollectionController{
+		CollectionUseCase: mockCollUseCase,
+	}
+
+	userID := "attacker-id"
+	collID := "collection-id"
+	collection := domain.Collection{
+		ID:     collID,
+		Author: "real-owner-id",
+	}
+
+	mockCollUseCase.On("GetByID", mock.Anything, collID).Return(collection, nil)
+
+	req := httptest.NewRequest(http.MethodDelete, "/collections/{id}", nil)
+	req = req.WithContext(context.WithValue(req.Context(), "x-user-id", userID))
+	chiCtx := chi.NewRouteContext()
+	chiCtx.URLParams.Add("id", collID)
+	req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, chiCtx))
+
+	rr := httptest.NewRecorder()
+	controller.Delete(rr, req)
+
+	res := rr.Result()
+	defer res.Body.Close()
+
+	assert.Equal(t, http.StatusForbidden, res.StatusCode)
+	var resp domain.SuccessResponse
+	assert.NoError(t, json.NewDecoder(res.Body).Decode(&resp))
+	assert.Contains(t, resp.Message, "You are not the owner of this collection")
 }
