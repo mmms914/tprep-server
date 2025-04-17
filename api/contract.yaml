@@ -530,7 +530,7 @@ paths:
                 example: бинарные данные
 
         '404':
-          description: колоды не существует
+          description: колоды не существует / нет доступа к картинке (напр. была удалена)
           content:
             application/json:
               schema:
@@ -917,7 +917,7 @@ paths:
       tags:
         - user
       summary: Получение истории тренировок текущего пользователя
-      description: Доступно только авторизованным пользователям
+      description: Доступно только авторизованным пользователям. Нет гарантии, что указанный attachment в ошибках достижим. Если поле attachment = пустая строка, вложения нет
       operationId: getUserHistory
       parameters:
         - name: from_time
@@ -1523,6 +1523,9 @@ components:
         blank_answer:
           type: string
           example: blank answer
+        attachment:
+          type: string
+          example: fjsdkfjklsdfjsdklf
     RightItem:
       type: object
       properties:

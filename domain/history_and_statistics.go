@@ -38,6 +38,7 @@ type ErrorItem struct {
 	Type        string `bson:"type" json:"type"`
 	UserAnswer  string `bson:"user_answer" json:"user_answer"`
 	BlankAnswer string `bson:"blank_answer" json:"blank_answer"`
+	Attachment  string `bson:"attachment" json:"attachment"`
 }
 
 type RightAnswerItem struct {
