@@ -72,7 +72,12 @@ func (cr *collectionRepository) GetByFilter(c context.Context, filter interface{
 
 	op := options.Find()
 	if opts.SortBy != "" {
-		op = op.SetSort(bson.D{{opts.SortBy, -1}})
+		sortFilter := bson.D{
+			{Key: opts.SortBy, Value: -1},
+			{Key: "name", Value: 1},
+			{Key: "_id", Value: 1},
+		}
+		op = op.SetSort(sortFilter)
 	}
 	op = op.SetLimit(opts.Limit).SetSkip(opts.Skip)
 
