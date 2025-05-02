@@ -9,6 +9,7 @@ import (
 	"main/domain"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -33,6 +34,7 @@ func (cu *collectionUseCase) Create(c context.Context, collection *domain.Collec
 	defer cancel()
 
 	collection.Cards = make([]domain.Card, 0)
+	collection.NameLower = strings.ToLower(collection.Name)
 	return cu.collectionRepository.Create(ctx, collection)
 }
 

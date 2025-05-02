@@ -14,6 +14,7 @@ const (
 type Collection struct {
 	ID        string `bson:"_id" json:"id"`
 	Name      string `bson:"name" json:"name"`
+	NameLower string `bson:"name_lower" json:"name_lower"`
 	IsPublic  bool   `bson:"is_public" json:"is_public"`
 	Cards     []Card `bson:"cards" json:"cards"`
 	MaxId     int    `bson:"max_id" json:"max_id"`
