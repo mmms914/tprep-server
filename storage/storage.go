@@ -35,6 +35,7 @@ func New(endpoint string, options Options) (Client, error) {
 }
 
 func (sc *storageClient) GetObject(ctx context.Context, bucketName string, objectName string) ([]byte, error) {
+	objectName = objectName + ".jpeg"
 	obj, err := sc.cl.GetObject(ctx, bucketName, objectName, minio.GetObjectOptions{})
 	if err != nil {
 		return nil, err
@@ -44,11 +45,13 @@ func (sc *storageClient) GetObject(ctx context.Context, bucketName string, objec
 }
 
 func (sc *storageClient) PutObject(ctx context.Context, bucketName string, objectName string, reader io.Reader, objectSize int64) error {
+	objectName = objectName + ".jpeg"
 	_, err := sc.cl.PutObject(ctx, bucketName, objectName, reader, objectSize, minio.PutObjectOptions{})
 	return err
 }
 
 func (sc *storageClient) RemoveObject(ctx context.Context, bucketName string, objectName string) error {
+	objectName = objectName + ".jpeg"
 	return sc.cl.RemoveObject(ctx, bucketName, objectName, minio.RemoveObjectOptions{})
 }
 
