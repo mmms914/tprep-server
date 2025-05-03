@@ -29,13 +29,24 @@ func NewCollectionUseCase(collectionRepository domain.CollectionRepository, coll
 	}
 }
 
-func (cu *collectionUseCase) Create(c context.Context, collection *domain.Collection) (string, error) {
+func (cu *collectionUseCase) Create(c context.Context, collection *domain.Collection, userID string) (string, error) {
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
 
 	collection.Cards = make([]domain.Card, 0)
 	collection.NameLower = strings.ToLower(collection.Name)
-	return cu.collectionRepository.Create(ctx, collection)
+
+	id, err := cu.collectionRepository.Create(ctx, collection)
+	if err != nil {
+		return "", err
+	}
+
+	err = cu.userRepository.AddCollection(ctx, userID, id, "collections")
+	if err != nil {
+		return "", err
+	}
+
+	return id, nil
 }
 
 func (cu *collectionUseCase) PutByID(c context.Context, collectionID string, collection *domain.Collection) error {
@@ -59,9 +70,14 @@ func (cu *collectionUseCase) PutByID(c context.Context, collectionID string, col
 	return nil
 }
 
-func (cu *collectionUseCase) AddLike(c context.Context, collectionID string) (*domain.Collection, error) {
+func (cu *collectionUseCase) AddLike(c context.Context, collectionID string, userID string) (*domain.Collection, error) {
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
+
+	err := cu.userRepository.AddCollection(ctx, userID, collectionID, "favourite")
+	if err != nil {
+		return nil, err
+	}
 
 	update := bson.D{
 		{"$inc", bson.D{{"likes", 1}}},
@@ -80,9 +96,14 @@ func (cu *collectionUseCase) AddLike(c context.Context, collectionID string) (*d
 	return &updated, nil
 }
 
-func (cu *collectionUseCase) RemoveLike(c context.Context, collectionID string) (*domain.Collection, error) {
+func (cu *collectionUseCase) RemoveLike(c context.Context, collectionID string, userID string) (*domain.Collection, error) {
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
+
+	err := cu.userRepository.DeleteCollection(ctx, userID, collectionID, "favourite")
+	if err != nil {
+		return nil, err
+	}
 
 	current, err := cu.collectionRepository.GetByID(ctx, collectionID)
 	if err != nil {
@@ -101,6 +122,7 @@ func (cu *collectionUseCase) RemoveLike(c context.Context, collectionID string) 
 	if err != nil {
 		return nil, err
 	}
+
 	if res.MatchedCount == 0 {
 		return nil, errors.New("collection not exists")
 	}
@@ -113,9 +135,15 @@ func (cu *collectionUseCase) RemoveLike(c context.Context, collectionID string) 
 	return &updated, nil
 }
 
-func (cu *collectionUseCase) DeleteByID(c context.Context, collectionID string) error {
+func (cu *collectionUseCase) DeleteByID(c context.Context, collectionID, userID string) error {
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
+
+	err := cu.userRepository.DeleteCollection(ctx, userID, collectionID, "collections")
+	if err != nil {
+		return err
+	}
+
 	return cu.collectionRepository.DeleteByID(ctx, collectionID)
 }
 

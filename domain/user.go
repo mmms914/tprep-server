@@ -47,14 +47,14 @@ type UserRepository interface {
 	DeleteByID(c context.Context, userID string) error
 	GetByID(c context.Context, userID string) (User, error)
 	GetByEmail(c context.Context, email string) (User, error)
+	AddCollection(c context.Context, userID string, collectionID string, collectionType string) error
+	DeleteCollection(c context.Context, userID string, collectionID string, collectionType string) error
 }
 
 type UserUseCase interface {
 	PutByID(c context.Context, userID string, user *User) error
 	GetByID(c context.Context, userID string) (User, error)
 	DeleteByID(c context.Context, userID string) error
-	AddCollection(c context.Context, userID string, collectionID string, collectionType string) error
-	DeleteCollection(c context.Context, userID string, collectionID string, collectionType string) error
 	GetProfilePicture(c context.Context, userID string) ([]byte, error)
 	UploadProfilePicture(c context.Context, userID string, picture io.Reader, size int64) error
 	RemoveProfilePicture(c context.Context, userID string) error

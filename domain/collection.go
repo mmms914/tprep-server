@@ -57,12 +57,12 @@ type CollectionRepository interface {
 }
 
 type CollectionUseCase interface {
-	Create(c context.Context, collection *Collection) (string, error)
+	Create(c context.Context, collection *Collection, userID string) (string, error)
 	PutByID(c context.Context, collectionID string, collection *Collection) error
-	DeleteByID(c context.Context, collectionID string) error
+	DeleteByID(c context.Context, collectionID string, userID string) error
 	GetByID(c context.Context, collectionID string) (Collection, error)
-	AddLike(c context.Context, collectionID string) (*Collection, error)
-	RemoveLike(c context.Context, collectionID string) (*Collection, error)
+	AddLike(c context.Context, collectionID string, userID string) (*Collection, error)
+	RemoveLike(c context.Context, collectionID string, userID string) (*Collection, error)
 	SearchPublic(c context.Context, text string, count int, offset int, sortBy string, category string, userID string) ([]Collection, error)
 	SearchPublicByAuthor(c context.Context, author string) ([]Collection, error)
 	AddCard(c context.Context, collectionID string, card *Card) (Card, error)

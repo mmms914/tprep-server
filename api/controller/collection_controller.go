@@ -16,7 +16,7 @@ type CollectionController struct {
 	HistoryUseCase    domain.HistoryUseCase
 }
 
-func (cc *CollectionController) Create(w http.ResponseWriter, r *http.Request) {
+func (cc *CollectionController) Create(w http.ResponseWriter, r *http.Request) { // add transaction
 	var collection domain.Collection
 
 	err := json.NewDecoder(r.Body).Decode(&collection)
@@ -33,19 +33,13 @@ func (cc *CollectionController) Create(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("x-user-id").(string)
 	collection.Author = userID
 
-	id, err := cc.CollectionUseCase.Create(r.Context(), &collection)
+	id, err := cc.CollectionUseCase.Create(r.Context(), &collection, userID)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
 		return
 	}
 
 	collection, err = cc.CollectionUseCase.GetByID(r.Context(), id)
-	if err != nil {
-		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
-		return
-	}
-
-	err = cc.UserUseCase.AddCollection(r.Context(), userID, id, "collections")
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
 		return
@@ -106,7 +100,7 @@ func (cc *CollectionController) Update(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (cc *CollectionController) AddLike(w http.ResponseWriter, r *http.Request) {
+func (cc *CollectionController) AddLike(w http.ResponseWriter, r *http.Request) { // add transaction
 	id := chi.URLParam(r, "id")
 	userID := r.Context().Value("x-user-id").(string)
 
@@ -132,23 +126,7 @@ func (cc *CollectionController) AddLike(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	collection, err := cc.CollectionUseCase.AddLike(r.Context(), id)
-	if err != nil {
-		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
-		return
-	}
-
-	collectionInfo := domain.CollectionInfo{
-		ID:        collection.ID,
-		Name:      collection.Name,
-		IsPublic:  collection.IsPublic,
-		Cards:     collection.Cards,
-		Author:    collection.Author,
-		Likes:     collection.Likes,
-		Trainings: collection.Trainings,
-	}
-
-	err = cc.UserUseCase.AddCollection(r.Context(), userID, id, "favourite")
+	collection, err := cc.CollectionUseCase.AddLike(r.Context(), id, userID)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
 		return
@@ -156,11 +134,11 @@ func (cc *CollectionController) AddLike(w http.ResponseWriter, r *http.Request) 
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	response := map[string]int{"likes": collectionInfo.Likes}
+	response := map[string]int{"likes": collection.Likes}
 	json.NewEncoder(w).Encode(response)
 }
 
-func (cc *CollectionController) RemoveLike(w http.ResponseWriter, r *http.Request) {
+func (cc *CollectionController) RemoveLike(w http.ResponseWriter, r *http.Request) { // add transaction
 	id := chi.URLParam(r, "id")
 	userID := r.Context().Value("x-user-id").(string)
 
@@ -192,7 +170,7 @@ func (cc *CollectionController) RemoveLike(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	collection, err := cc.CollectionUseCase.RemoveLike(r.Context(), id)
+	collection, err := cc.CollectionUseCase.RemoveLike(r.Context(), id, userID)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
 		return
@@ -206,12 +184,6 @@ func (cc *CollectionController) RemoveLike(w http.ResponseWriter, r *http.Reques
 		Author:    collection.Author,
 		Likes:     collection.Likes,
 		Trainings: collection.Trainings,
-	}
-
-	err = cc.UserUseCase.DeleteCollection(r.Context(), userID, id, "favourite")
-	if err != nil {
-		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
-		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -256,7 +228,7 @@ func (cc *CollectionController) Get(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(collectionInfo)
 }
 
-func (cc *CollectionController) Delete(w http.ResponseWriter, r *http.Request) {
+func (cc *CollectionController) Delete(w http.ResponseWriter, r *http.Request) { // add transaction
 	userID := r.Context().Value("x-user-id").(string)
 
 	id := chi.URLParam(r, "id")
@@ -278,15 +250,9 @@ func (cc *CollectionController) Delete(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	err = cc.CollectionUseCase.DeleteByID(r.Context(), id)
+	err = cc.CollectionUseCase.DeleteByID(r.Context(), coll.ID, coll.Author)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusNotFound)
-		return
-	}
-
-	err = cc.UserUseCase.DeleteCollection(r.Context(), userID, id, "collections")
-	if err != nil {
-		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
 		return
 	}
 

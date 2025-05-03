@@ -61,3 +61,43 @@ func (ur *userRepository) GetByEmail(c context.Context, email string) (domain.Us
 	err := collection.FindOne(c, filter).Decode(&user)
 	return user, err
 }
+
+func (ur *userRepository) AddCollection(c context.Context, userID string, collectionID string, collectionType string) error {
+	var update bson.D
+	if collectionType == "collections" {
+		update = bson.D{
+			{"$push", bson.D{
+				{"collections", collectionID},
+			}},
+		}
+	}
+	if collectionType == "favourite" {
+		update = bson.D{
+			{"$push", bson.D{
+				{"favourite", collectionID},
+			}},
+		}
+	}
+
+	return ur.UpdateByID(c, userID, update)
+}
+
+func (ur *userRepository) DeleteCollection(c context.Context, userID string, collectionID string, collectionType string) error {
+	var update bson.D
+	if collectionType == "collections" {
+		update = bson.D{
+			{"$pull", bson.D{
+				{"collections", collectionID},
+			}},
+		}
+	}
+	if collectionType == "favourite" {
+		update = bson.D{
+			{"$pull", bson.D{
+				{"favourite", collectionID},
+			}},
+		}
+	}
+
+	return ur.UpdateByID(c, userID, update)
+}

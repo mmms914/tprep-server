@@ -47,50 +47,6 @@ func (uu *userUseCase) GetByID(c context.Context, userID string) (domain.User, e
 	return uu.userRepository.GetByID(ctx, userID)
 }
 
-func (uu *userUseCase) AddCollection(c context.Context, userID string, collectionID string, collectionType string) error {
-	ctx, cancel := context.WithTimeout(c, uu.contextTimeout)
-	defer cancel()
-	var update bson.D
-	if collectionType == "collections" {
-		update = bson.D{
-			{"$push", bson.D{
-				{"collections", collectionID},
-			}},
-		}
-	}
-	if collectionType == "favourite" {
-		update = bson.D{
-			{"$push", bson.D{
-				{"favourite", collectionID},
-			}},
-		}
-	}
-
-	return uu.userRepository.UpdateByID(ctx, userID, update)
-}
-
-func (uu *userUseCase) DeleteCollection(c context.Context, userID string, collectionID string, collectionType string) error {
-	ctx, cancel := context.WithTimeout(c, uu.contextTimeout)
-	defer cancel()
-	var update bson.D
-	if collectionType == "collections" {
-		update = bson.D{
-			{"$pull", bson.D{
-				{"collections", collectionID},
-			}},
-		}
-	}
-	if collectionType == "favourite" {
-		update = bson.D{
-			{"$pull", bson.D{
-				{"favourite", collectionID},
-			}},
-		}
-	}
-
-	return uu.userRepository.UpdateByID(ctx, userID, update)
-}
-
 func (uu *userUseCase) GetProfilePicture(c context.Context, userID string) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(c, uu.contextTimeout)
 	defer cancel()
