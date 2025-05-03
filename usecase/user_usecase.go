@@ -32,7 +32,8 @@ func (uu *userUseCase) PutByID(c context.Context, userID string, user *domain.Us
 			{"email", user.Email},
 		}},
 	}
-	return uu.userRepository.UpdateByID(ctx, userID, update)
+	_, err := uu.userRepository.UpdateByID(ctx, userID, update)
+	return err
 }
 
 func (uu *userUseCase) DeleteByID(c context.Context, userID string) error {
@@ -64,7 +65,7 @@ func (uu *userUseCase) UploadProfilePicture(c context.Context, userID string, pi
 		}},
 	}
 
-	err := uu.userRepository.UpdateByID(ctx, userID, update)
+	_, err := uu.userRepository.UpdateByID(ctx, userID, update)
 	if err != nil {
 		return err
 	}
@@ -82,7 +83,7 @@ func (uu *userUseCase) RemoveProfilePicture(c context.Context, userID string) er
 		}},
 	}
 
-	err := uu.userRepository.UpdateByID(ctx, userID, update)
+	_, err := uu.userRepository.UpdateByID(ctx, userID, update)
 	if err != nil {
 		return err
 	}

@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"io"
+	"main/database"
 )
 
 const (
@@ -42,8 +43,8 @@ type PublicUserInfo struct {
 
 type UserRepository interface {
 	Create(c context.Context, user *User) (string, error)
-	Update(c context.Context, filter interface{}, update interface{}) error
-	UpdateByID(c context.Context, userID string, update interface{}) error
+	Update(c context.Context, filter interface{}, update interface{}) (database.UpdateResult, error)
+	UpdateByID(c context.Context, userID string, update interface{}) (database.UpdateResult, error)
 	DeleteByID(c context.Context, userID string) error
 	GetByID(c context.Context, userID string) (User, error)
 	GetByEmail(c context.Context, email string) (User, error)

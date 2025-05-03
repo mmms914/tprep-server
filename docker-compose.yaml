@@ -17,6 +17,7 @@ services:
   mongo:
     image: mongo:8.0.3
     container_name: mongo
+    command: --replSet rs0
     restart: unless-stopped
     env_file: .env
     ports:

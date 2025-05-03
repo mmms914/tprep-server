@@ -7,6 +7,7 @@ import (
 	"io"
 	"main/database"
 	"main/domain"
+	"main/repository"
 	"slices"
 	"strconv"
 	"strings"
@@ -36,17 +37,32 @@ func (cu *collectionUseCase) Create(c context.Context, collection *domain.Collec
 	collection.Cards = make([]domain.Card, 0)
 	collection.NameLower = strings.ToLower(collection.Name)
 
-	id, err := cu.collectionRepository.Create(ctx, collection)
+	client := repository.GetClient()
+	session, err := client.StartSession()
 	if err != nil {
 		return "", err
 	}
 
-	err = cu.userRepository.AddCollection(ctx, userID, id, "collections")
+	defer session.EndSession(ctx)
+
+	id, err := session.WithTransaction(ctx, func(transactionCtx context.Context) (interface{}, error) {
+		id, err := cu.collectionRepository.Create(transactionCtx, collection)
+		if err != nil {
+			return nil, err
+		}
+
+		err = cu.userRepository.AddCollection(transactionCtx, userID, id, "collections")
+		if err != nil {
+			return nil, err
+		}
+
+		return id, nil
+	})
 	if err != nil {
 		return "", err
 	}
 
-	return id, nil
+	return id.(string), nil
 }
 
 func (cu *collectionUseCase) PutByID(c context.Context, collectionID string, collection *domain.Collection) error {
@@ -74,36 +90,48 @@ func (cu *collectionUseCase) AddLike(c context.Context, collectionID string, use
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
 
-	err := cu.userRepository.AddCollection(ctx, userID, collectionID, "favourite")
+	client := repository.GetClient()
+	session, err := client.StartSession()
 	if err != nil {
 		return nil, err
 	}
 
-	update := bson.D{
-		{"$inc", bson.D{{"likes", 1}}},
-	}
-	res, err := cu.collectionRepository.UpdateByID(ctx, collectionID, update)
+	defer session.EndSession(ctx)
+
+	_, err = session.WithTransaction(ctx, func(transactionCtx context.Context) (interface{}, error) {
+		err := cu.userRepository.AddCollection(transactionCtx, userID, collectionID, "favourite")
+		if err != nil {
+			return nil, err
+		}
+
+		update := bson.D{
+			{"$inc", bson.D{{"likes", 1}}},
+		}
+		res, err := cu.collectionRepository.UpdateByID(transactionCtx, collectionID, update)
+		if err != nil {
+			return nil, err
+		}
+		if res.MatchedCount == 0 {
+			return nil, errors.New("collection not exists")
+		}
+
+		return nil, nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	if res.MatchedCount == 0 {
-		return nil, errors.New("collection not exists")
-	}
+
 	updated, err := cu.collectionRepository.GetByID(ctx, collectionID)
 	if err != nil {
 		return nil, err
 	}
+
 	return &updated, nil
 }
 
 func (cu *collectionUseCase) RemoveLike(c context.Context, collectionID string, userID string) (*domain.Collection, error) {
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
-
-	err := cu.userRepository.DeleteCollection(ctx, userID, collectionID, "favourite")
-	if err != nil {
-		return nil, err
-	}
 
 	current, err := cu.collectionRepository.GetByID(ctx, collectionID)
 	if err != nil {
@@ -114,17 +142,36 @@ func (cu *collectionUseCase) RemoveLike(c context.Context, collectionID string, 
 		return &current, nil
 	}
 
-	update := bson.D{
-		{"$inc", bson.D{{"likes", -1}}},
-	}
-
-	res, err := cu.collectionRepository.UpdateByID(ctx, collectionID, update)
+	client := repository.GetClient()
+	session, err := client.StartSession()
 	if err != nil {
 		return nil, err
 	}
 
-	if res.MatchedCount == 0 {
-		return nil, errors.New("collection not exists")
+	defer session.EndSession(ctx)
+
+	_, err = session.WithTransaction(ctx, func(transactionCtx context.Context) (interface{}, error) {
+		err = cu.userRepository.DeleteCollection(transactionCtx, userID, collectionID, "favourite")
+		if err != nil {
+			return nil, err
+		}
+
+		update := bson.D{
+			{"$inc", bson.D{{"likes", -1}}},
+		}
+
+		res, err := cu.collectionRepository.UpdateByID(transactionCtx, collectionID, update)
+		if err != nil {
+			return nil, err
+		}
+
+		if res.MatchedCount == 0 {
+			return nil, errors.New("collection not exists")
+		}
+		return nil, nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	updated, err := cu.collectionRepository.GetByID(ctx, collectionID)
@@ -139,12 +186,38 @@ func (cu *collectionUseCase) DeleteByID(c context.Context, collectionID, userID 
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
 
-	err := cu.userRepository.DeleteCollection(ctx, userID, collectionID, "collections")
+	client := repository.GetClient()
+	session, err := client.StartSession()
 	if err != nil {
 		return err
 	}
 
-	return cu.collectionRepository.DeleteByID(ctx, collectionID)
+	defer session.EndSession(ctx)
+
+	_, err = session.WithTransaction(ctx, func(transactionCtx context.Context) (interface{}, error) {
+		err := cu.userRepository.DeleteCollection(transactionCtx, userID, collectionID, "collections")
+		if err != nil {
+			return nil, err
+		}
+
+		coll, err := cu.GetByID(transactionCtx, collectionID)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, elem := range coll.Cards {
+			if elem.Attachment != "" {
+				err = cu.RemoveCardPicture(transactionCtx, userID, collectionID, elem.LocalID, elem.Attachment)
+				if err != nil && err.Error() != "card picture not exists" {
+					return nil, err
+				}
+			}
+		}
+
+		return nil, cu.collectionRepository.DeleteByID(transactionCtx, collectionID)
+	})
+
+	return err
 }
 
 func (cu *collectionUseCase) GetByID(c context.Context, collectionID string) (domain.Collection, error) {
@@ -355,7 +428,7 @@ func (cu *collectionUseCase) UploadCardPhoto(c context.Context, userID string, c
 		}},
 	}
 
-	err = cu.userRepository.UpdateByID(ctx, userID, update)
+	_, err = cu.userRepository.UpdateByID(ctx, userID, update)
 	if err != nil {
 		return "", err
 	}
@@ -391,7 +464,7 @@ func (cu *collectionUseCase) RemoveCardPicture(c context.Context, userID, collec
 
 	obj, err := cu.collectionStorage.GetObject(ctx, objectName)
 	if err != nil {
-		return errors.New("Card picture not exists")
+		return errors.New("card picture not exists")
 	}
 
 	// update card in collection
@@ -419,7 +492,7 @@ func (cu *collectionUseCase) RemoveCardPicture(c context.Context, userID, collec
 		}},
 	}
 
-	err = cu.userRepository.UpdateByID(ctx, userID, update)
+	_, err = cu.userRepository.UpdateByID(ctx, userID, update)
 	if err != nil {
 		return err
 	}

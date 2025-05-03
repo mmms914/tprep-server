@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/gookit/slog"
 	"main/database"
+	"main/repository"
 	"time"
 )
 
@@ -27,6 +28,8 @@ func NewMongoDatabase(env *Env) database.Client {
 	if err != nil {
 		slog.Fatal(err)
 	}
+
+	repository.SetClient(client)
 
 	slog.Println("Successfully connected to MongoDB!")
 	return client

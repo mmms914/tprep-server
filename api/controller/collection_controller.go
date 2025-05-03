@@ -16,7 +16,7 @@ type CollectionController struct {
 	HistoryUseCase    domain.HistoryUseCase
 }
 
-func (cc *CollectionController) Create(w http.ResponseWriter, r *http.Request) { // add transaction
+func (cc *CollectionController) Create(w http.ResponseWriter, r *http.Request) {
 	var collection domain.Collection
 
 	err := json.NewDecoder(r.Body).Decode(&collection)
@@ -100,7 +100,7 @@ func (cc *CollectionController) Update(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func (cc *CollectionController) AddLike(w http.ResponseWriter, r *http.Request) { // add transaction
+func (cc *CollectionController) AddLike(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	userID := r.Context().Value("x-user-id").(string)
 
@@ -138,7 +138,7 @@ func (cc *CollectionController) AddLike(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(response)
 }
 
-func (cc *CollectionController) RemoveLike(w http.ResponseWriter, r *http.Request) { // add transaction
+func (cc *CollectionController) RemoveLike(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	userID := r.Context().Value("x-user-id").(string)
 
@@ -228,7 +228,7 @@ func (cc *CollectionController) Get(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(collectionInfo)
 }
 
-func (cc *CollectionController) Delete(w http.ResponseWriter, r *http.Request) { // add transaction
+func (cc *CollectionController) Delete(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value("x-user-id").(string)
 
 	id := chi.URLParam(r, "id")
@@ -242,12 +242,6 @@ func (cc *CollectionController) Delete(w http.ResponseWriter, r *http.Request) {
 	if coll.Author != userID {
 		http.Error(w, jsonError("You are not the owner of this collection"), http.StatusForbidden)
 		return
-	}
-
-	for _, elem := range coll.Cards {
-		if elem.Attachment != "" {
-			cc.CollectionUseCase.RemoveCardPicture(r.Context(), userID, id, elem.LocalID, elem.Attachment)
-		}
 	}
 
 	err = cc.CollectionUseCase.DeleteByID(r.Context(), coll.ID, coll.Author)

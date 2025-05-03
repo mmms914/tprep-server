@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"go.mongodb.org/mongo-driver/v2/bson"
 	"main/database"
 	"main/domain"
@@ -27,16 +28,15 @@ func (ur *userRepository) Create(c context.Context, user *domain.User) (string, 
 	return id, err
 }
 
-func (ur *userRepository) UpdateByID(c context.Context, userID string, update interface{}) error {
+func (ur *userRepository) UpdateByID(c context.Context, userID string, update interface{}) (database.UpdateResult, error) {
 	filter := bson.D{{Key: "_id", Value: userID}}
 	return ur.Update(c, filter, update)
 }
 
-func (ur *userRepository) Update(c context.Context, filter interface{}, update interface{}) error {
+func (ur *userRepository) Update(c context.Context, filter interface{}, update interface{}) (database.UpdateResult, error) {
 	collection := ur.database.Collection(ur.collection)
 
-	_, err := collection.UpdateOne(c, filter, update)
-	return err
+	return collection.UpdateOne(c, filter, update)
 }
 
 func (ur *userRepository) DeleteByID(c context.Context, userID string) error {
@@ -79,7 +79,16 @@ func (ur *userRepository) AddCollection(c context.Context, userID string, collec
 		}
 	}
 
-	return ur.UpdateByID(c, userID, update)
+	res, err := ur.UpdateByID(c, userID, update)
+	if err != nil {
+		return err
+	}
+
+	if res.ModifiedCount == 0 {
+		return errors.New("user not found")
+	}
+
+	return nil
 }
 
 func (ur *userRepository) DeleteCollection(c context.Context, userID string, collectionID string, collectionType string) error {
@@ -98,6 +107,14 @@ func (ur *userRepository) DeleteCollection(c context.Context, userID string, col
 			}},
 		}
 	}
+	res, err := ur.UpdateByID(c, userID, update)
+	if err != nil {
+		return err
+	}
 
-	return ur.UpdateByID(c, userID, update)
+	if res.ModifiedCount == 0 {
+		return errors.New("user not found")
+	}
+
+	return nil
 }

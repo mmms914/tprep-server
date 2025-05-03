@@ -48,6 +48,13 @@ type Client interface {
 	Database(string) Database
 	Ping(context.Context) error
 	Disconnect(context.Context) error
+
+	StartSession() (Session, error)
+}
+
+type Session interface {
+	WithTransaction(ctx context.Context, fn func(ctx context.Context) (interface{}, error)) (interface{}, error)
+	EndSession(ctx context.Context)
 }
 
 type mongoClient struct {
@@ -60,12 +67,12 @@ type mongoCollection struct {
 	coll *mongo.Collection
 }
 
-type mongoSingleResult struct {
-	sr *mongo.SingleResult
+type mongoSession struct {
+	ss *mongo.Session
 }
 
-type mongoUpdateResult struct {
-	ur *mongo.UpdateResult
+type mongoSingleResult struct {
+	sr *mongo.SingleResult
 }
 
 func (mc *mongoClient) Ping(ctx context.Context) error {
@@ -156,6 +163,19 @@ func (sr *mongoSingleResult) Decode(v interface{}) error {
 
 func (mc *mongoClient) Disconnect(ctx context.Context) error {
 	return mc.cl.Disconnect(ctx)
+}
+
+func (mc *mongoClient) StartSession() (Session, error) {
+	session, err := mc.cl.StartSession()
+	return &mongoSession{ss: session}, err
+}
+
+func (ms *mongoSession) EndSession(ctx context.Context) {
+	ms.ss.EndSession(ctx)
+}
+
+func (ms *mongoSession) WithTransaction(ctx context.Context, fn func(ctx context.Context) (interface{}, error)) (interface{}, error) {
+	return ms.ss.WithTransaction(ctx, fn)
 }
 
 func NewClient(connection string) (Client, error) {

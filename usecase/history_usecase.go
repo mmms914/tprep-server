@@ -47,7 +47,7 @@ func (hu *historyUseCase) AddTraining(c context.Context, userID string, historyI
 			{"statistics", newStatistics},
 		}},
 	}
-	err = hu.userRepository.UpdateByID(ctx, userID, update)
+	_, err = hu.userRepository.UpdateByID(ctx, userID, update)
 	if err != nil {
 		return err
 	}
