@@ -5,6 +5,7 @@ import (
 	"github.com/gookit/slog"
 	"main/domain"
 	"main/storage"
+	"os"
 	"time"
 )
 
@@ -14,10 +15,9 @@ func NewStorage(env *Env) storage.Client {
 
 	var endpoint string
 
-	if env.AppEnv == "local" {
-		endpoint = env.LocalMinioURI
-	} else if env.AppEnv == "docker" {
-		endpoint = env.DockerMinioURI
+	endpoint, exists := os.LookupEnv("MINIO_URI")
+	if !exists {
+		slog.Fatal("Cannot find MINIO_URI system variable")
 	}
 
 	accessKeyID := env.MinioRootUser

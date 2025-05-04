@@ -5,6 +5,7 @@ import (
 	"github.com/gookit/slog"
 	"main/database"
 	"main/repository"
+	"os"
 	"time"
 )
 
@@ -12,11 +13,9 @@ func NewMongoDatabase(env *Env) database.Client {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	var mongodbURI string
-	if env.AppEnv == "local" {
-		mongodbURI = env.LocalMongoURI
-	} else if env.AppEnv == "docker" {
-		mongodbURI = env.DockerMongoURI
+	mongodbURI, exists := os.LookupEnv("MONGODB_URI")
+	if !exists {
+		slog.Fatal("Cannot find MONGODB_URI system variable")
 	}
 
 	client, err := database.NewClient(mongodbURI)

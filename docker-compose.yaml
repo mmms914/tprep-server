@@ -6,6 +6,10 @@ services:
     container_name: tprep-server
     restart: unless-stopped
     env_file: .env
+    environment:
+      - APP_ENV=docker
+      - MINIO_URI=minio:9000
+      - MONGODB_URI=mongodb://mongo:27017
     ports:
       - ${PORT}:${PORT}
     depends_on:
@@ -33,6 +37,7 @@ services:
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus-data:/prometheus
+      - ./prometheus_bearer:/etc/prometheus/prometheus_bearer
     ports:
       - "9090:9090"
     networks:

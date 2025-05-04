@@ -4,21 +4,18 @@ import (
 	"fmt"
 	"github.com/gookit/slog"
 	"github.com/spf13/viper"
+	"os"
 )
 
 type Env struct {
-	AppEnv string `mapstructure:"APP_ENV"`
-	Port   int    `mapstructure:"PORT"`
+	Port int `mapstructure:"PORT"`
 
-	LocalMongoURI  string `mapstructure:"LOCAL_MONGO_URI"`
-	DockerMongoURI string `mapstructure:"DOCKER_MONGO_URI"`
-	DBName         string `mapstructure:"DB_NAME"`
-	DBPort         int    `mapstructure:"DB_PORT"`
+	DBName string `mapstructure:"DB_NAME"`
+	DBPort int    `mapstructure:"DB_PORT"`
 
-	MinioPort         int    `mapstructure:"MINIO_PORT"`
-	MongoDir          string `mapstructure:"MONGO_DIR"`
-	LocalMinioURI     string `mapstructure:"LOCAL_MINIO_URI"`
-	DockerMinioURI    string `mapstructure:"DOCKER_MINIO_URI"`
+	MinioPort int    `mapstructure:"MINIO_PORT"`
+	MongoDir  string `mapstructure:"MONGO_DIR"`
+
 	MinioRootUser     string `mapstructure:"MINIO_ROOT_USER"`
 	MinioRootPassword string `mapstructure:"MINIO_ROOT_PASSWORD"`
 
@@ -40,7 +37,7 @@ func NewEnv() *Env {
 	if err != nil {
 		slog.Fatal("Environment can't be loaded", err)
 	}
-	slog.Info(fmt.Sprintf("The T-prep is running in %s env", env.AppEnv))
+	slog.Info(fmt.Sprintf("The T-prep is running in %s env", os.Getenv("APP_ENV")))
 
 	return &env
 }
