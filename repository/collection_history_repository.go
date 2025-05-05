@@ -50,8 +50,8 @@ func (chr *collectionHistoryRepository) UpdateByID(c context.Context, collection
 	collection := chr.database.Collection(chr.collection)
 	filter := bson.D{{Key: "_id", Value: collectionID}}
 	update := bson.D{
-		{"$push", bson.D{
-			{"items", item},
+		{Key: "$push", Value: bson.D{
+			{Key: "items", Value: item},
 		}},
 	}
 	_, err = collection.UpdateOne(c, filter, update)

@@ -49,8 +49,8 @@ func (uhr *userHistoryRepository) UpdateByID(c context.Context, userID string, i
 	collection := uhr.database.Collection(uhr.collection)
 	filter := bson.D{{Key: "_id", Value: userID}}
 	update := bson.D{
-		{"$push", bson.D{
-			{"items", item},
+		{Key: "$push", Value: bson.D{
+			{Key: "items", Value: item},
 		}},
 	}
 	_, err = collection.UpdateOne(c, filter, update)

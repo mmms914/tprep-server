@@ -70,9 +70,9 @@ func (cu *collectionUseCase) PutByID(c context.Context, collectionID string, col
 	defer cancel()
 
 	update := bson.D{
-		{"$set", bson.D{
-			{"name", collection.Name},
-			{"is_public", collection.IsPublic},
+		{Key: "$set", Value: bson.D{
+			{Key: "name", Value: collection.Name},
+			{Key: "is_public", Value: collection.IsPublic},
 		}},
 	}
 	res, err := cu.collectionRepository.UpdateByID(ctx, collectionID, update)
@@ -298,8 +298,7 @@ func (cu *collectionUseCase) SearchPublicByAuthor(c context.Context, author stri
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
 
-	var filter interface{}
-	filter = bson.M{
+	var filter interface{} = bson.M{
 		"author":    author,
 		"is_public": true,
 	}

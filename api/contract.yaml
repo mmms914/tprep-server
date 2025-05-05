@@ -83,6 +83,38 @@ paths:
                     message:
                       type: string
                       example: "*custom error*"
+  /global/trackFavourite:
+    post:
+      tags:
+        - global
+      summary: Увеличение счетчика нажатий на "избранное"
+      operationId: trackFavourite
+      requestBody:
+        description: JSON-объект
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                favourite_filter_button:
+                  type: integer
+                  example: 20
+                favourite_profile_button:
+                  type: integer
+                  example: 13
+      responses:
+        '200':
+          description: Успешно прибавлено к метрике
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invalid data
   /public/signup:
     post:
       tags:

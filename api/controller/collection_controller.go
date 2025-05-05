@@ -57,7 +57,11 @@ func (cc *CollectionController) Create(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(collectionInfo)
+	err = json.NewEncoder(w).Encode(collectionInfo)
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (cc *CollectionController) Update(w http.ResponseWriter, r *http.Request) {
@@ -95,9 +99,13 @@ func (cc *CollectionController) Update(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(domain.SuccessResponse{
+	err = json.NewEncoder(w).Encode(domain.SuccessResponse{
 		Message: "Collection updated",
 	})
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (cc *CollectionController) AddLike(w http.ResponseWriter, r *http.Request) {
@@ -135,7 +143,11 @@ func (cc *CollectionController) AddLike(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	response := map[string]int{"likes": collection.Likes}
-	json.NewEncoder(w).Encode(response)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (cc *CollectionController) RemoveLike(w http.ResponseWriter, r *http.Request) {
@@ -189,7 +201,11 @@ func (cc *CollectionController) RemoveLike(w http.ResponseWriter, r *http.Reques
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	response := map[string]int{"likes": collectionInfo.Likes}
-	json.NewEncoder(w).Encode(response)
+	err = json.NewEncoder(w).Encode(response)
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (cc *CollectionController) Get(w http.ResponseWriter, r *http.Request) {
@@ -225,7 +241,11 @@ func (cc *CollectionController) Get(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(collectionInfo)
+	err = json.NewEncoder(w).Encode(collectionInfo)
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (cc *CollectionController) Delete(w http.ResponseWriter, r *http.Request) {
@@ -252,9 +272,13 @@ func (cc *CollectionController) Delete(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(domain.SuccessResponse{
+	err = json.NewEncoder(w).Encode(domain.SuccessResponse{
 		Message: "Collection deleted successfully",
 	})
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (cc *CollectionController) Search(w http.ResponseWriter, r *http.Request) {
@@ -320,7 +344,11 @@ func (cc *CollectionController) Search(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(result)
+	err = json.NewEncoder(w).Encode(result)
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (cc *CollectionController) CreateCard(w http.ResponseWriter, r *http.Request) {
@@ -357,7 +385,11 @@ func (cc *CollectionController) CreateCard(w http.ResponseWriter, r *http.Reques
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(card)
+	err = json.NewEncoder(w).Encode(card)
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (cc *CollectionController) UpdateCard(w http.ResponseWriter, r *http.Request) {
@@ -401,9 +433,13 @@ func (cc *CollectionController) UpdateCard(w http.ResponseWriter, r *http.Reques
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(domain.SuccessResponse{
+	err = json.NewEncoder(w).Encode(domain.SuccessResponse{
 		Message: "Card updated",
 	})
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (cc *CollectionController) DeleteCard(w http.ResponseWriter, r *http.Request) {
@@ -447,9 +483,13 @@ func (cc *CollectionController) DeleteCard(w http.ResponseWriter, r *http.Reques
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(domain.SuccessResponse{
+	err = json.NewEncoder(w).Encode(domain.SuccessResponse{
 		Message: "Card deleted successfully",
 	})
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (cc *CollectionController) AddTraining(w http.ResponseWriter, r *http.Request) {
@@ -485,9 +525,13 @@ func (cc *CollectionController) AddTraining(w http.ResponseWriter, r *http.Reque
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(domain.SuccessResponse{
+	err = json.NewEncoder(w).Encode(domain.SuccessResponse{
 		Message: "History item successfully added",
 	})
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (cc *CollectionController) GetCardPicture(w http.ResponseWriter, r *http.Request) {
@@ -536,7 +580,11 @@ func (cc *CollectionController) GetCardPicture(w http.ResponseWriter, r *http.Re
 
 	w.Header().Set("Content-Type", "image/jpeg")
 	w.WriteHeader(http.StatusOK)
-	w.Write(fileBytes)
+	_, err = w.Write(fileBytes)
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (cc *CollectionController) UploadCardPicture(w http.ResponseWriter, r *http.Request) {
@@ -581,7 +629,11 @@ func (cc *CollectionController) UploadCardPicture(w http.ResponseWriter, r *http
 	for _, elem := range coll.Cards {
 		if elem.LocalID == cardID {
 			if elem.Attachment != "" {
-				cc.CollectionUseCase.RemoveCardPicture(r.Context(), userID, id, cardID, elem.Attachment)
+				err = cc.CollectionUseCase.RemoveCardPicture(r.Context(), userID, id, cardID, elem.Attachment)
+				if err != nil {
+					http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+					return
+				}
 			}
 			break
 		}
@@ -596,9 +648,13 @@ func (cc *CollectionController) UploadCardPicture(w http.ResponseWriter, r *http
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(domain.UploadCardPhotoResult{
+	err = json.NewEncoder(w).Encode(domain.UploadCardPhotoResult{
 		ObjectName: objectName,
 	})
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
 }
 
 func (cc *CollectionController) RemoveCardPicture(w http.ResponseWriter, r *http.Request) {
@@ -644,7 +700,11 @@ func (cc *CollectionController) RemoveCardPicture(w http.ResponseWriter, r *http
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(domain.SuccessResponse{
+	err = json.NewEncoder(w).Encode(domain.SuccessResponse{
 		Message: "Card picture deleted",
 	})
+	if err != nil {
+		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+		return
+	}
 }

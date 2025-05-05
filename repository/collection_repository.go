@@ -64,7 +64,7 @@ func (cr *collectionRepository) GetByFilter(c context.Context, filter interface{
 	collections := cr.database.Collection(cr.collection)
 
 	notDeletedFilter := bson.D{
-		{"$and", []interface{}{
+		{Key: "$and", Value: []interface{}{
 			filter,
 			bson.D{{Key: "is_deleted", Value: bson.D{{Key: "$exists", Value: false}}}},
 		}},
