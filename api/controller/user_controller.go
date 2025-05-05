@@ -47,6 +47,7 @@ func (uc *UserController) Get(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(userInfo)
+		return
 	case internal.ValidateUUID(id) != nil:
 		http.Error(w, jsonError("Invalid id"), http.StatusBadRequest)
 		return
@@ -78,6 +79,7 @@ func (uc *UserController) Get(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(publicUserInfo)
+		return
 	}
 }
 

@@ -7,10 +7,8 @@ import (
 	"strings"
 )
 
-type contextKey string
-
 const (
-	userIDKey contextKey = "x-user-id"
+	userIDKey string = "x-user-id"
 )
 
 //nolint:mnd // business logic
