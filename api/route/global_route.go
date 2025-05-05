@@ -1,11 +1,12 @@
 package route
 
 import (
-	"github.com/go-chi/chi/v5"
 	"main/api/controller"
 	"main/bootstrap"
 	"main/usecase"
 	"time"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func NewGlobalRouter(env *bootstrap.Env, timeout time.Duration, r chi.Router) {

@@ -2,14 +2,16 @@ package bootstrap
 
 import (
 	"context"
-	"github.com/gookit/slog"
 	"main/domain"
 	"main/storage"
 	"os"
 	"time"
+
+	"github.com/gookit/slog"
 )
 
 func NewStorage(env *Env) storage.Client {
+	//nolint:mnd // 10 sec
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 

@@ -3082,7 +3082,7 @@ func easyjson3e1fa5ecDecodeMainDomain28(in *jlexer.Lexer, out *Collection) {
 				in.Delim(']')
 			}
 		case "max_id":
-			out.MaxId = int(in.Int())
+			out.MaxID = int(in.Int())
 		case "author":
 			out.Author = string(in.String())
 		case "likes":
@@ -3142,7 +3142,7 @@ func easyjson3e1fa5ecEncodeMainDomain28(out *jwriter.Writer, in Collection) {
 	{
 		const prefix string = ",\"max_id\":"
 		out.RawString(prefix)
-		out.Int(int(in.MaxId))
+		out.Int(int(in.MaxID))
 	}
 	{
 		const prefix string = ",\"author\":"

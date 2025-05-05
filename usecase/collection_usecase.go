@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 	"errors"
-	"go.mongodb.org/mongo-driver/v2/bson"
 	"io"
 	"main/database"
 	"main/domain"
@@ -12,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type collectionUseCase struct {
@@ -21,7 +22,10 @@ type collectionUseCase struct {
 	contextTimeout       time.Duration
 }
 
-func NewCollectionUseCase(collectionRepository domain.CollectionRepository, collectionStorage domain.CollectionStorage, userRepository domain.UserRepository, timeout time.Duration) domain.CollectionUseCase {
+func NewCollectionUseCase(
+	collectionRepository domain.CollectionRepository, collectionStorage domain.CollectionStorage,
+	userRepository domain.UserRepository, timeout time.Duration,
+) domain.CollectionUseCase {
 	return &collectionUseCase{
 		collectionRepository: collectionRepository,
 		collectionStorage:    collectionStorage,
@@ -46,7 +50,8 @@ func (cu *collectionUseCase) Create(c context.Context, collection *domain.Collec
 	defer session.EndSession(ctx)
 
 	id, err := session.WithTransaction(ctx, func(transactionCtx context.Context) (interface{}, error) {
-		id, err := cu.collectionRepository.Create(transactionCtx, collection)
+		var id string
+		id, err = cu.collectionRepository.Create(transactionCtx, collection)
 		if err != nil {
 			return nil, err
 		}
@@ -86,7 +91,8 @@ func (cu *collectionUseCase) PutByID(c context.Context, collectionID string, col
 	return nil
 }
 
-func (cu *collectionUseCase) AddLike(c context.Context, collectionID string, userID string) (*domain.Collection, error) {
+func (cu *collectionUseCase) AddLike(
+	c context.Context, collectionID string, userID string) (*domain.Collection, error) {
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
 
@@ -97,17 +103,17 @@ func (cu *collectionUseCase) AddLike(c context.Context, collectionID string, use
 	}
 
 	defer session.EndSession(ctx)
-
 	_, err = session.WithTransaction(ctx, func(transactionCtx context.Context) (interface{}, error) {
-		err := cu.userRepository.AddCollection(transactionCtx, userID, collectionID, "favourite")
+		err = cu.userRepository.AddCollection(transactionCtx, userID, collectionID, "favourite")
 		if err != nil {
 			return nil, err
 		}
 
 		update := bson.D{
-			{"$inc", bson.D{{"likes", 1}}},
+			{Key: "$inc", Value: bson.D{{Key: "likes", Value: 1}}},
 		}
-		res, err := cu.collectionRepository.UpdateByID(transactionCtx, collectionID, update)
+		var res database.UpdateResult
+		res, err = cu.collectionRepository.UpdateByID(transactionCtx, collectionID, update)
 		if err != nil {
 			return nil, err
 		}
@@ -115,7 +121,7 @@ func (cu *collectionUseCase) AddLike(c context.Context, collectionID string, use
 			return nil, errors.New("collection not exists")
 		}
 
-		return nil, nil
+		return true, nil
 	})
 	if err != nil {
 		return nil, err
@@ -129,7 +135,8 @@ func (cu *collectionUseCase) AddLike(c context.Context, collectionID string, use
 	return &updated, nil
 }
 
-func (cu *collectionUseCase) RemoveLike(c context.Context, collectionID string, userID string) (*domain.Collection, error) {
+func (cu *collectionUseCase) RemoveLike(
+	c context.Context, collectionID string, userID string) (*domain.Collection, error) {
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
 
@@ -157,10 +164,10 @@ func (cu *collectionUseCase) RemoveLike(c context.Context, collectionID string, 
 		}
 
 		update := bson.D{
-			{"$inc", bson.D{{"likes", -1}}},
+			{Key: "$inc", Value: bson.D{{Key: "likes", Value: -1}}},
 		}
-
-		res, err := cu.collectionRepository.UpdateByID(transactionCtx, collectionID, update)
+		var res database.UpdateResult
+		res, err = cu.collectionRepository.UpdateByID(transactionCtx, collectionID, update)
 		if err != nil {
 			return nil, err
 		}
@@ -168,7 +175,7 @@ func (cu *collectionUseCase) RemoveLike(c context.Context, collectionID string, 
 		if res.MatchedCount == 0 {
 			return nil, errors.New("collection not exists")
 		}
-		return nil, nil
+		return true, nil
 	})
 	if err != nil {
 		return nil, err
@@ -195,12 +202,12 @@ func (cu *collectionUseCase) DeleteByID(c context.Context, collectionID, userID 
 	defer session.EndSession(ctx)
 
 	_, err = session.WithTransaction(ctx, func(transactionCtx context.Context) (interface{}, error) {
-		err := cu.userRepository.DeleteCollection(transactionCtx, userID, collectionID, "collections")
+		err = cu.userRepository.DeleteCollection(transactionCtx, userID, collectionID, "collections")
 		if err != nil {
 			return nil, err
 		}
-
-		coll, err := cu.GetByID(transactionCtx, collectionID)
+		var coll domain.Collection
+		coll, err = cu.GetByID(transactionCtx, collectionID)
 		if err != nil {
 			return nil, err
 		}
@@ -226,7 +233,9 @@ func (cu *collectionUseCase) GetByID(c context.Context, collectionID string) (do
 	return cu.collectionRepository.GetByID(ctx, collectionID)
 }
 
-func (cu *collectionUseCase) SearchPublic(c context.Context, text string, count int, offset int, sortBy string, category string, userID string) ([]domain.Collection, error) {
+func (cu *collectionUseCase) SearchPublic(
+	c context.Context, text string, count int, offset int, sortBy string, category string, userID string,
+) ([]domain.Collection, error) {
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
 
@@ -270,7 +279,6 @@ func (cu *collectionUseCase) SearchPublic(c context.Context, text string, count 
 				},
 			}
 		}
-
 	}
 
 	opts := database.FindOptions{
@@ -317,16 +325,16 @@ func (cu *collectionUseCase) AddCard(c context.Context, collectionID string, car
 		return domain.Card{}, err
 	}
 
-	card.LocalID = collection.MaxId
+	card.LocalID = collection.MaxID
 	if card.OtherAnswers.Items == nil {
 		card.OtherAnswers.Items = make([]string, 0)
 	}
 	update := bson.D{
-		{"$push", bson.D{
-			{"cards", card},
+		{Key: "$push", Value: bson.D{
+			{Key: "cards", Value: card},
 		}},
-		{"$inc", bson.D{
-			{"max_id", 1},
+		{Key: "$inc", Value: bson.D{
+			{Key: "max_id", Value: 1},
 		}},
 	}
 
@@ -347,9 +355,9 @@ func (cu *collectionUseCase) DeleteCard(c context.Context, collectionID string, 
 	defer cancel()
 
 	update := bson.D{
-		{"$pull", bson.D{
-			{"cards", bson.D{
-				{"local_id", cardLocalID},
+		{Key: "$pull", Value: bson.D{
+			{Key: "cards", Value: bson.D{
+				{Key: "local_id", Value: cardLocalID},
 			}},
 		}},
 	}
@@ -358,7 +366,7 @@ func (cu *collectionUseCase) DeleteCard(c context.Context, collectionID string, 
 		return err
 	}
 	if res.ModifiedCount == 0 {
-		return errors.New("Card not exists")
+		return errors.New("card not exists")
 	}
 
 	return nil
@@ -369,8 +377,8 @@ func (cu *collectionUseCase) UpdateCard(c context.Context, collectionID string, 
 	defer cancel()
 
 	filter := bson.D{
-		{"_id", collectionID},
-		{"cards.local_id", card.LocalID},
+		{Key: "_id", Value: collectionID},
+		{Key: "cards.local_id", Value: card.LocalID},
 	}
 
 	if card.OtherAnswers.Items == nil {
@@ -378,10 +386,10 @@ func (cu *collectionUseCase) UpdateCard(c context.Context, collectionID string, 
 	}
 
 	update := bson.D{
-		{"$set", bson.D{
-			{"cards.$.question", card.Question},
-			{"cards.$.answer", card.Answer},
-			{"cards.$.other_answers", card.OtherAnswers},
+		{Key: "$set", Value: bson.D{
+			{Key: "cards.$.question", Value: card.Question},
+			{Key: "cards.$.answer", Value: card.Answer},
+			{Key: "cards.$.other_answers", Value: card.OtherAnswers},
 		}},
 	}
 	res, err := cu.collectionRepository.Update(ctx, filter, update)
@@ -402,7 +410,9 @@ func (cu *collectionUseCase) GetCardPhoto(c context.Context, objectName string) 
 	return cu.collectionStorage.GetObject(ctx, objectName)
 }
 
-func (cu *collectionUseCase) UploadCardPhoto(c context.Context, userID string, collectionID string, cardID int, picture io.Reader, size int64) (string, error) {
+func (cu *collectionUseCase) UploadCardPhoto(
+	c context.Context, userID string, collectionID string, cardID int, picture io.Reader, size int64,
+) (string, error) {
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
 
@@ -422,8 +432,8 @@ func (cu *collectionUseCase) UploadCardPhoto(c context.Context, userID string, c
 	user.Limits.TotalFileSize += int(size)
 
 	update := bson.D{
-		{"$set", bson.D{
-			{"limits", user.Limits},
+		{Key: "$set", Value: bson.D{
+			{Key: "limits", Value: user.Limits},
 		}},
 	}
 
@@ -439,13 +449,13 @@ func (cu *collectionUseCase) UploadCardPhoto(c context.Context, userID string, c
 	}
 
 	filter := bson.D{
-		{"_id", collectionID},
-		{"cards.local_id", cardID},
+		{Key: "_id", Value: collectionID},
+		{Key: "cards.local_id", Value: cardID},
 	}
 
 	update = bson.D{
-		{"$set", bson.D{
-			{"cards.$.attachment", objectName},
+		{Key: "$set", Value: bson.D{
+			{Key: "cards.$.attachment", Value: objectName},
 		}},
 	}
 
@@ -457,7 +467,12 @@ func (cu *collectionUseCase) UploadCardPhoto(c context.Context, userID string, c
 	return objectName, nil
 }
 
-func (cu *collectionUseCase) RemoveCardPicture(c context.Context, userID, collectionID string, cardID int, objectName string) error {
+func (cu *collectionUseCase) RemoveCardPicture(
+	c context.Context,
+	userID, collectionID string,
+	cardID int,
+	objectName string,
+) error {
 	ctx, cancel := context.WithTimeout(c, cu.contextTimeout)
 	defer cancel()
 
@@ -468,13 +483,13 @@ func (cu *collectionUseCase) RemoveCardPicture(c context.Context, userID, collec
 
 	// update card in collection
 	filter := bson.D{
-		{"_id", collectionID},
-		{"cards.local_id", cardID},
+		{Key: "_id", Value: collectionID},
+		{Key: "cards.local_id", Value: cardID},
 	}
 
 	update := bson.D{
-		{"$set", bson.D{
-			{"cards.$.attachment", ""},
+		{Key: "$set", Value: bson.D{
+			{Key: "cards.$.attachment", Value: ""},
 		}},
 	}
 
@@ -486,8 +501,8 @@ func (cu *collectionUseCase) RemoveCardPicture(c context.Context, userID, collec
 
 	// update user limits
 	update = bson.D{
-		{"$inc", bson.D{
-			{"limits.total_file_size", -len(obj)},
+		{Key: "$inc", Value: bson.D{
+			{Key: "limits.total_file_size", Value: -len(obj)},
 		}},
 	}
 

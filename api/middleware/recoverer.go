@@ -1,8 +1,9 @@
 package middleware
 
 import (
-	"github.com/gookit/slog"
 	"net/http"
+
+	"github.com/gookit/slog"
 )
 
 func Recoverer(next http.Handler) http.Handler {

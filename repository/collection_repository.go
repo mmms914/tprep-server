@@ -2,11 +2,12 @@ package repository
 
 import (
 	"context"
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"main/database"
 	"main/domain"
 	"main/internal"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type collectionRepository struct {
@@ -28,12 +29,20 @@ func (cr *collectionRepository) Create(c context.Context, collection *domain.Col
 	return id, err
 }
 
-func (cr *collectionRepository) UpdateByID(c context.Context, collectionID string, update interface{}) (database.UpdateResult, error) {
+func (cr *collectionRepository) UpdateByID(
+	c context.Context,
+	collectionID string,
+	update interface{},
+) (database.UpdateResult, error) {
 	filter := bson.D{{Key: "_id", Value: collectionID}}
 	return cr.Update(c, filter, update)
 }
 
-func (cr *collectionRepository) Update(c context.Context, filter interface{}, update interface{}) (database.UpdateResult, error) {
+func (cr *collectionRepository) Update(
+	c context.Context,
+	filter interface{},
+	update interface{},
+) (database.UpdateResult, error) {
 	collections := cr.database.Collection(cr.collection)
 	return collections.UpdateOne(c, filter, update)
 }
@@ -59,7 +68,11 @@ func (cr *collectionRepository) GetByID(c context.Context, collectionID string) 
 	return result, err
 }
 
-func (cr *collectionRepository) GetByFilter(c context.Context, filter interface{}, opts database.FindOptions) ([]domain.Collection, error) {
+func (cr *collectionRepository) GetByFilter(
+	c context.Context,
+	filter interface{},
+	opts database.FindOptions,
+) ([]domain.Collection, error) {
 	var results []domain.Collection
 	collections := cr.database.Collection(cr.collection)
 

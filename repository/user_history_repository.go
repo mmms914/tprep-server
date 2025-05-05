@@ -3,10 +3,11 @@ package repository
 import (
 	"context"
 	"errors"
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
 	"main/database"
 	"main/domain"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 type userHistoryRepository struct {
@@ -28,7 +29,7 @@ func (uhr *userHistoryRepository) CreateIfNotExists(c context.Context, userID st
 	filter := bson.M{"_id": userID}
 	if err := collection.FindOne(c, filter).Decode(&userHistory); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			userHistory := domain.UserHistory{
+			userHistory = domain.UserHistory{
 				UserID: userID,
 				Items:  make([]domain.HistoryItem, 0),
 			}

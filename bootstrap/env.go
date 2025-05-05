@@ -2,9 +2,10 @@ package bootstrap
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/gookit/slog"
 	"github.com/spf13/viper"
-	"os"
 )
 
 type Env struct {

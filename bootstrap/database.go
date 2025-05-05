@@ -2,14 +2,16 @@ package bootstrap
 
 import (
 	"context"
-	"github.com/gookit/slog"
 	"main/database"
 	"main/repository"
 	"os"
 	"time"
+
+	"github.com/gookit/slog"
 )
 
-func NewMongoDatabase(env *Env) database.Client {
+func NewMongoDatabase(_ *Env) database.Client {
+	//nolint:mnd // 10 sec
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 

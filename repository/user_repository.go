@@ -3,10 +3,11 @@ package repository
 import (
 	"context"
 	"errors"
-	"go.mongodb.org/mongo-driver/v2/bson"
 	"main/database"
 	"main/domain"
 	"main/internal"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type userRepository struct {
@@ -28,12 +29,20 @@ func (ur *userRepository) Create(c context.Context, user *domain.User) (string, 
 	return id, err
 }
 
-func (ur *userRepository) UpdateByID(c context.Context, userID string, update interface{}) (database.UpdateResult, error) {
+func (ur *userRepository) UpdateByID(
+	c context.Context,
+	userID string,
+	update interface{},
+) (database.UpdateResult, error) {
 	filter := bson.D{{Key: "_id", Value: userID}}
 	return ur.Update(c, filter, update)
 }
 
-func (ur *userRepository) Update(c context.Context, filter interface{}, update interface{}) (database.UpdateResult, error) {
+func (ur *userRepository) Update(
+	c context.Context,
+	filter interface{},
+	update interface{},
+) (database.UpdateResult, error) {
 	collection := ur.database.Collection(ur.collection)
 
 	return collection.UpdateOne(c, filter, update)
@@ -62,19 +71,24 @@ func (ur *userRepository) GetByEmail(c context.Context, email string) (domain.Us
 	return user, err
 }
 
-func (ur *userRepository) AddCollection(c context.Context, userID string, collectionID string, collectionType string) error {
+func (ur *userRepository) AddCollection(
+	c context.Context,
+	userID string,
+	collectionID string,
+	collectionType string,
+) error {
 	var update bson.D
 	if collectionType == "collections" {
 		update = bson.D{
-			{"$push", bson.D{
-				{"collections", collectionID},
+			{Key: "$push", Value: bson.D{
+				{Key: "collections", Value: collectionID},
 			}},
 		}
 	}
 	if collectionType == "favourite" {
 		update = bson.D{
-			{"$push", bson.D{
-				{"favourite", collectionID},
+			{Key: "$push", Value: bson.D{
+				{Key: "favourite", Value: collectionID},
 			}},
 		}
 	}
@@ -91,19 +105,24 @@ func (ur *userRepository) AddCollection(c context.Context, userID string, collec
 	return nil
 }
 
-func (ur *userRepository) DeleteCollection(c context.Context, userID string, collectionID string, collectionType string) error {
+func (ur *userRepository) DeleteCollection(
+	c context.Context,
+	userID string,
+	collectionID string,
+	collectionType string,
+) error {
 	var update bson.D
 	if collectionType == "collections" {
 		update = bson.D{
-			{"$pull", bson.D{
-				{"collections", collectionID},
+			{Key: "$pull", Value: bson.D{
+				{Key: "collections", Value: collectionID},
 			}},
 		}
 	}
 	if collectionType == "favourite" {
 		update = bson.D{
-			{"$pull", bson.D{
-				{"favourite", collectionID},
+			{Key: "$pull", Value: bson.D{
+				{Key: "favourite", Value: collectionID},
 			}},
 		}
 	}

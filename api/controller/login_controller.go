@@ -2,10 +2,11 @@ package controller
 
 import (
 	"encoding/json"
-	"golang.org/x/crypto/bcrypt"
 	"main/bootstrap"
 	"main/domain"
 	"net/http"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type LoginController struct {
@@ -34,13 +35,21 @@ func (lc *LoginController) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, expAccess, err := lc.LoginUseCase.CreateAccessToken(&user, lc.Env.AccessTokenSecret, lc.Env.AccessTokenExpiryHour)
+	accessToken, expAccess, err := lc.LoginUseCase.CreateAccessToken(
+		&user,
+		lc.Env.AccessTokenSecret,
+		lc.Env.AccessTokenExpiryHour,
+	)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
 		return
 	}
 
-	refreshToken, expRefresh, err := lc.LoginUseCase.CreateRefreshToken(&user, lc.Env.RefreshTokenSecret, lc.Env.RefreshTokenExpiryHour)
+	refreshToken, expRefresh, err := lc.LoginUseCase.CreateRefreshToken(
+		&user,
+		lc.Env.RefreshTokenSecret,
+		lc.Env.RefreshTokenExpiryHour,
+	)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
 		return

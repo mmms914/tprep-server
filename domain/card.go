@@ -3,9 +3,9 @@ package domain
 type Card struct {
 	LocalID  int    `bson:"local_id" json:"local_id"`
 	Question string `bson:"question" json:"question"`
-	Answer   string `bson:"answer" json:"answer"`
+	Answer   string `bson:"answer"   json:"answer"`
 
-	Attachment   string       `bson:"attachment" json:"attachment"`
+	Attachment   string       `bson:"attachment"    json:"attachment"`
 	OtherAnswers OtherAnswers `bson:"other_answers" json:"other_answers"`
 }
 

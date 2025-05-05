@@ -1,13 +1,9 @@
-package tests
+package tests_test
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/mailru/easyjson"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"golang.org/x/crypto/bcrypt"
 	"io"
 	"main/api/controller"
 	"main/bootstrap"
@@ -18,6 +14,12 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/mailru/easyjson"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func TestUserController_Get_OwnProfile(t *testing.T) {
@@ -47,6 +49,7 @@ func TestUserController_Get_OwnProfile(t *testing.T) {
 	}
 
 	req := httptest.NewRequest(http.MethodGet, "/user", nil)
+	//nolint:revive,staticcheck // uselless
 	ctx := context.WithValue(req.Context(), "x-user-id", userID)
 	req = req.WithContext(ctx)
 
@@ -63,7 +66,7 @@ func TestUserController_Get_OwnProfile(t *testing.T) {
 
 	var userInfo domain.UserInfo
 	err := easyjson.Unmarshal(body, &userInfo)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, userID, userInfo.ID)
 	assert.Equal(t, "johndoe", userInfo.Username)
 	assert.Equal(t, "john@example.com", userInfo.Email)
@@ -87,6 +90,7 @@ func TestUserController_Get_InvalidUserID(t *testing.T) {
 		HistoryUseCase:    mockHistoryUseCase,
 	}
 	req := httptest.NewRequest(http.MethodGet, "/user", nil)
+	//nolint:revive,staticcheck // uselless
 	ctx := context.WithValue(req.Context(), "x-user-id", invalidUserID)
 	req = req.WithContext(ctx)
 
@@ -145,7 +149,7 @@ func TestUserController_SignUp_Success(t *testing.T) {
 
 	var resp domain.SignupResponse
 	err := json.NewDecoder(res.Body).Decode(&resp)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "new-user-id", resp.UserID)
 	assert.Equal(t, "access-token", resp.AccessToken)
 	assert.Equal(t, "refresh-token", resp.RefreshToken)
@@ -248,7 +252,7 @@ func TestUserController_Login_Success(t *testing.T) {
 
 	var resp domain.LoginResponse
 	err := json.NewDecoder(res.Body).Decode(&resp)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "access-token", resp.AccessToken)
 	assert.Equal(t, "refresh-token", resp.RefreshToken)
 	mockUseCase.AssertExpectations(t)
@@ -328,6 +332,7 @@ func TestUserController_Update_Success(t *testing.T) {
 		Return(nil)
 	bodyJSON, _ := easyjson.Marshal(updatedUser)
 	req := httptest.NewRequest(http.MethodPut, "/user/{id}", strings.NewReader(string(bodyJSON)))
+	//nolint:revive,staticcheck // uselless
 	ctx := context.WithValue(req.Context(), "x-user-id", userID)
 	req = req.WithContext(ctx)
 	rr := httptest.NewRecorder()
@@ -338,7 +343,7 @@ func TestUserController_Update_Success(t *testing.T) {
 	assert.Equal(t, "application/json", res.Header.Get("Content-Type"))
 	var response domain.SuccessResponse
 	err := json.NewDecoder(res.Body).Decode(&response)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "User updated", response.Message)
 	mockUseCase.AssertExpectations(t)
 }

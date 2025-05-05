@@ -1,14 +1,10 @@
-package tests
+package tests_test
 
 import (
 	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/go-chi/chi/v5"
-	"github.com/mailru/easyjson"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"main/api/controller"
 	"main/domain"
 	mocks "main/mocks/domain"
@@ -16,6 +12,12 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/mailru/easyjson"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCollectionController_Create_Success(t *testing.T) {
@@ -45,6 +47,7 @@ func TestCollectionController_Create_Success(t *testing.T) {
 
 	bodyJSON, _ := easyjson.Marshal(collection)
 	req := httptest.NewRequest(http.MethodPost, "/collection", strings.NewReader(string(bodyJSON)))
+	//nolint:revive,staticcheck // uselless
 	req = req.WithContext(context.WithValue(req.Context(), "x-user-id", userID))
 	rr := httptest.NewRecorder()
 
@@ -56,7 +59,7 @@ func TestCollectionController_Create_Success(t *testing.T) {
 	assert.Equal(t, "application/json", res.Header.Get("Content-Type"))
 	var response domain.CollectionInfo
 	err := json.NewDecoder(res.Body).Decode(&response)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, createdID, response.ID)
 	assert.Equal(t, collection.Name, response.Name)
 	mockCollUseCase.AssertExpectations(t)
@@ -74,6 +77,7 @@ func TestCollectionController_Create_EmptyName(t *testing.T) {
 	bodyJSON, _ := easyjson.Marshal(invalidCollection)
 
 	req := httptest.NewRequest(http.MethodPost, "/collection", strings.NewReader(string(bodyJSON)))
+	//nolint:revive,staticcheck // uselless
 	req = req.WithContext(context.WithValue(req.Context(), "x-user-id", "user-id"))
 	rr := httptest.NewRecorder()
 	controller.Create(rr, req)
@@ -101,6 +105,7 @@ func TestCollectionController_Update_Success(t *testing.T) {
 
 	bodyJSON, _ := easyjson.Marshal(updCollection)
 	req := httptest.NewRequest(http.MethodPut, "/collection/{id}", strings.NewReader(string(bodyJSON)))
+	//nolint:revive,staticcheck // uselless
 	req = req.WithContext(context.WithValue(req.Context(), "x-user-id", userID))
 	chiCtx := chi.NewRouteContext()
 	chiCtx.URLParams.Add("id", collID)
@@ -110,7 +115,7 @@ func TestCollectionController_Update_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, rr.Result().StatusCode)
 	var resp domain.SuccessResponse
-	assert.NoError(t, json.NewDecoder(rr.Body).Decode(&resp))
+	require.NoError(t, json.NewDecoder(rr.Body).Decode(&resp))
 	assert.Equal(t, "Collection updated", resp.Message)
 
 	mockCollUseCase.AssertExpectations(t)
@@ -121,13 +126,14 @@ func TestCollectionController_Update_EmptyName(t *testing.T) {
 	collection := domain.Collection{Name: ""}
 	bodyJSON, _ := easyjson.Marshal(collection)
 	req := httptest.NewRequest(http.MethodPut, "/collection/{id}", strings.NewReader(string(bodyJSON)))
+	//nolint:revive,staticcheck // uselless
 	req = req.WithContext(context.WithValue(req.Context(), "x-user-id", "user-id"))
 	rr := httptest.NewRecorder()
 	controller.Update(rr, req)
 
 	assert.Equal(t, http.StatusBadRequest, rr.Result().StatusCode)
 	var resp domain.SuccessResponse
-	assert.NoError(t, json.NewDecoder(rr.Body).Decode(&resp))
+	require.NoError(t, json.NewDecoder(rr.Body).Decode(&resp))
 	assert.Contains(t, "Invalid name", resp.Message)
 }
 
@@ -139,6 +145,7 @@ func TestCollectionController_Update_NotFound(t *testing.T) {
 	bodyJSON, _ := easyjson.Marshal(collection)
 	collID := "coll-id"
 	req := httptest.NewRequest(http.MethodPut, "/collections/{id}", bytes.NewReader(bodyJSON))
+	//nolint:revive,staticcheck // uselless
 	req = req.WithContext(context.WithValue(req.Context(), "x-user-id", "user-id"))
 	ctx := chi.NewRouteContext()
 	ctx.URLParams.Add("id", collID)
@@ -150,9 +157,8 @@ func TestCollectionController_Update_NotFound(t *testing.T) {
 
 	assert.Equal(t, http.StatusNotFound, rr.Result().StatusCode)
 	var resp domain.SuccessResponse
-	assert.NoError(t, json.NewDecoder(rr.Body).Decode(&resp))
+	require.NoError(t, json.NewDecoder(rr.Body).Decode(&resp))
 	assert.Contains(t, "There is no collection with this ID", resp.Message)
-
 }
 
 func TestCollectionController_Update_NotAuthor(t *testing.T) {
@@ -167,6 +173,7 @@ func TestCollectionController_Update_NotAuthor(t *testing.T) {
 	mockCollUseCase.On("GetByID", mock.Anything, collID).Return(collection, nil)
 
 	req := httptest.NewRequest(http.MethodPut, "/collection/{id}", strings.NewReader(string(bodyJSON)))
+	//nolint:revive,staticcheck // uselless
 	req = req.WithContext(context.WithValue(req.Context(), "x-user-id", "userID"))
 	ctx := chi.NewRouteContext()
 	ctx.URLParams.Add("id", collID)
@@ -176,7 +183,7 @@ func TestCollectionController_Update_NotAuthor(t *testing.T) {
 	controller.Update(rr, req)
 	assert.Equal(t, http.StatusForbidden, rr.Result().StatusCode)
 	var resp domain.SuccessResponse
-	assert.NoError(t, json.NewDecoder(rr.Body).Decode(&resp))
+	require.NoError(t, json.NewDecoder(rr.Body).Decode(&resp))
 	assert.Contains(t, "You are not the owner of this collection", resp.Message)
 }
 
@@ -200,6 +207,7 @@ func TestCollectionController_Delete_Success(t *testing.T) {
 	mockCollUseCase.On("DeleteByID", mock.Anything, collID, userID).Return(nil)
 
 	req := httptest.NewRequest(http.MethodDelete, "/collection/{id}", nil)
+	//nolint:revive,staticcheck // uselless
 	req = req.WithContext(context.WithValue(req.Context(), "x-user-id", userID))
 	chiCtx := chi.NewRouteContext()
 	chiCtx.URLParams.Add("id", collID)
@@ -211,7 +219,7 @@ func TestCollectionController_Delete_Success(t *testing.T) {
 
 	assert.Equal(t, http.StatusOK, res.StatusCode)
 	var resp domain.SuccessResponse
-	assert.NoError(t, json.NewDecoder(res.Body).Decode(&resp))
+	require.NoError(t, json.NewDecoder(res.Body).Decode(&resp))
 	assert.Contains(t, resp.Message, "Collection deleted successfully")
 
 	mockCollUseCase.AssertExpectations(t)
@@ -230,6 +238,7 @@ func TestCollectionController_Delete_NotFound(t *testing.T) {
 	mockCollUseCase.On("GetByID", mock.Anything, collID).Return(domain.Collection{}, errors.New("not found"))
 
 	req := httptest.NewRequest(http.MethodDelete, "/collections/{id}", nil)
+	//nolint:revive,staticcheck // uselless
 	req = req.WithContext(context.WithValue(req.Context(), "x-user-id", userID))
 	chiCtx := chi.NewRouteContext()
 	chiCtx.URLParams.Add("id", collID)
@@ -243,7 +252,7 @@ func TestCollectionController_Delete_NotFound(t *testing.T) {
 
 	assert.Equal(t, http.StatusNotFound, res.StatusCode)
 	var resp domain.SuccessResponse
-	assert.NoError(t, json.NewDecoder(res.Body).Decode(&resp))
+	require.NoError(t, json.NewDecoder(res.Body).Decode(&resp))
 	assert.Contains(t, resp.Message, "There is no collection with this ID")
 }
 
@@ -263,6 +272,7 @@ func TestCollectionController_Delete_NotAuthor(t *testing.T) {
 	mockCollUseCase.On("GetByID", mock.Anything, collID).Return(collection, nil)
 
 	req := httptest.NewRequest(http.MethodDelete, "/collections/{id}", nil)
+	//nolint:revive,staticcheck // uselless
 	req = req.WithContext(context.WithValue(req.Context(), "x-user-id", userID))
 	chiCtx := chi.NewRouteContext()
 	chiCtx.URLParams.Add("id", collID)
@@ -276,6 +286,6 @@ func TestCollectionController_Delete_NotAuthor(t *testing.T) {
 
 	assert.Equal(t, http.StatusForbidden, res.StatusCode)
 	var resp domain.SuccessResponse
-	assert.NoError(t, json.NewDecoder(res.Body).Decode(&resp))
+	require.NoError(t, json.NewDecoder(res.Body).Decode(&resp))
 	assert.Contains(t, resp.Message, "You are not the owner of this collection")
 }

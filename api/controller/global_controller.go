@@ -34,7 +34,11 @@ func (gc *GlobalController) GetTrainingPlan(w http.ResponseWriter, r *http.Reque
 	}
 
 	if endDate-startDate < 24*3600 {
-		http.Error(w, jsonError("difference between the beginning and the end should be at least a day"), http.StatusBadRequest)
+		http.Error(
+			w,
+			jsonError("difference between the beginning and the end should be at least a day"),
+			http.StatusBadRequest,
+		)
 		return
 	}
 

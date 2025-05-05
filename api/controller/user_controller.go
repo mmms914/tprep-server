@@ -21,7 +21,8 @@ func (uc *UserController) Get(w http.ResponseWriter, r *http.Request) {
 	queryParams := r.URL.Query()
 	id := queryParams.Get("id")
 
-	if id == "" { // получение своего профиля
+	switch {
+	case id == "": // получение своего профиля
 		user, err := uc.UserUseCase.GetByID(r.Context(), authID)
 		if err != nil {
 			http.Error(w, jsonError(err.Error()), http.StatusNotFound)
@@ -46,10 +47,10 @@ func (uc *UserController) Get(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(userInfo)
-	} else if internal.ValidateUUID(id) != nil {
+	case internal.ValidateUUID(id) != nil:
 		http.Error(w, jsonError("Invalid id"), http.StatusBadRequest)
 		return
-	} else { // получение чужого профиля
+	default: // получение чужого профиля
 		user, err := uc.UserUseCase.GetByID(r.Context(), id)
 		if err != nil {
 			http.Error(w, jsonError(err.Error()), http.StatusNotFound)
@@ -59,6 +60,10 @@ func (uc *UserController) Get(w http.ResponseWriter, r *http.Request) {
 		publicCollections := make([]string, 0)
 
 		collections, err := uc.CollectionUseCase.SearchPublicByAuthor(r.Context(), id)
+		if err != nil {
+			http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
+			return
+		}
 		for _, coll := range collections {
 			publicCollections = append(publicCollections, coll.ID)
 		}
@@ -127,6 +132,7 @@ func (uc *UserController) GetProfilePicture(w http.ResponseWriter, r *http.Reque
 	w.Write(fileBytes)
 }
 
+//nolint:mnd // 5 MB
 func (uc *UserController) UploadProfilePicture(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(5 << 20)
 	if err != nil {
@@ -145,7 +151,7 @@ func (uc *UserController) UploadProfilePicture(w http.ResponseWriter, r *http.Re
 		http.Error(w, jsonError("Image's size should be less than 5 MB"), http.StatusBadRequest)
 		return
 	}
-
+	//nolint:staticcheck // business logic
 	if !(strings.HasSuffix(handler.Filename, ".jpg") || strings.HasSuffix(handler.Filename, ".jpeg")) {
 		http.Error(w, jsonError("Image's extension should be JPG/JPEG"), http.StatusBadRequest)
 		return

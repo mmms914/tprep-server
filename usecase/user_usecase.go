@@ -2,10 +2,11 @@ package usecase
 
 import (
 	"context"
-	"go.mongodb.org/mongo-driver/v2/bson"
 	"io"
 	"main/domain"
 	"time"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type userUseCase struct {
@@ -14,7 +15,9 @@ type userUseCase struct {
 	contextTimeout time.Duration
 }
 
-func NewUserUseCase(userRepository domain.UserRepository, userStorage domain.UserStorage, timeout time.Duration) domain.UserUseCase {
+func NewUserUseCase(
+	userRepository domain.UserRepository, userStorage domain.UserStorage, timeout time.Duration,
+) domain.UserUseCase {
 	return &userUseCase{
 		userRepository: userRepository,
 		userStorage:    userStorage,
@@ -27,9 +30,9 @@ func (uu *userUseCase) PutByID(c context.Context, userID string, user *domain.Us
 	defer cancel()
 
 	update := bson.D{
-		{"$set", bson.D{
-			{"username", user.Username},
-			{"email", user.Email},
+		{Key: "$set", Value: bson.D{
+			{Key: "username", Value: user.Username},
+			{Key: "email", Value: user.Email},
 		}},
 	}
 	_, err := uu.userRepository.UpdateByID(ctx, userID, update)
@@ -60,8 +63,8 @@ func (uu *userUseCase) UploadProfilePicture(c context.Context, userID string, pi
 	defer cancel()
 
 	update := bson.D{
-		{"$set", bson.D{
-			{"has_picture", true},
+		{Key: "$set", Value: bson.D{
+			{Key: "has_picture", Value: true},
 		}},
 	}
 
@@ -78,8 +81,8 @@ func (uu *userUseCase) RemoveProfilePicture(c context.Context, userID string) er
 	defer cancel()
 
 	update := bson.D{
-		{"$set", bson.D{
-			{"has_picture", false},
+		{Key: "$set", Value: bson.D{
+			{Key: "has_picture", Value: false},
 		}},
 	}
 

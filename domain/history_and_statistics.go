@@ -8,51 +8,51 @@ const (
 )
 
 type UserStatistics struct {
-	TotalTrainings   int `bson:"total_trainings" json:"total_trainings"`
+	TotalTrainings   int `bson:"total_trainings"   json:"total_trainings"`
 	MediumPercentage int `bson:"medium_percentage" json:"medium_percentage"`
 }
 
 type HistoryItem struct {
-	CollectionID   string            `bson:"collection_id" json:"collection_id"`
+	CollectionID   string            `bson:"collection_id"   json:"collection_id"`
 	CollectionName string            `bson:"collection_name" json:"collection_name"`
-	Time           int               `bson:"time" json:"time"`
-	CorrectCards   []int             `bson:"correct_cards" json:"correct_cards"`
+	Time           int               `bson:"time"            json:"time"`
+	CorrectCards   []int             `bson:"correct_cards"   json:"correct_cards"`
 	IncorrectCards []int             `bson:"incorrect_cards" json:"incorrect_cards"`
 	AllCardsCount  int               `bson:"all_cards_count" json:"all_cards_count"`
-	Errors         []ErrorItem       `bson:"errors" json:"errors"`
-	RightAnswers   []RightAnswerItem `bson:"right_answers" json:"right_answers"`
+	Errors         []ErrorItem       `bson:"errors"          json:"errors"`
+	RightAnswers   []RightAnswerItem `bson:"right_answers"   json:"right_answers"`
 }
 
 type SmallHistoryItem struct {
 	CollectionName string `bson:"collection_name" json:"collection_name"`
-	Time           int    `bson:"time" json:"time"`
-	CorrectCards   []int  `bson:"correct_cards" json:"correct_cards"`
+	Time           int    `bson:"time"            json:"time"`
+	CorrectCards   []int  `bson:"correct_cards"   json:"correct_cards"`
 	IncorrectCards []int  `bson:"incorrect_cards" json:"incorrect_cards"`
 	AllCardsCount  int    `bson:"all_cards_count" json:"all_cards_count"`
 }
 
 type ErrorItem struct {
-	CardID      int    `bson:"card_id" json:"card_id"`
-	Question    string `bson:"question" json:"question"`
-	Answer      string `bson:"answer" json:"answer"`
-	Type        string `bson:"type" json:"type"`
-	UserAnswer  string `bson:"user_answer" json:"user_answer"`
+	CardID      int    `bson:"card_id"      json:"card_id"`
+	Question    string `bson:"question"     json:"question"`
+	Answer      string `bson:"answer"       json:"answer"`
+	Type        string `bson:"type"         json:"type"`
+	UserAnswer  string `bson:"user_answer"  json:"user_answer"`
 	BlankAnswer string `bson:"blank_answer" json:"blank_answer"`
-	Attachment  string `bson:"attachment" json:"attachment"`
+	Attachment  string `bson:"attachment"   json:"attachment"`
 }
 
 type RightAnswerItem struct {
 	CardID int    `bson:"card_id" json:"card_id"`
-	Type   string `bson:"type" json:"type"`
+	Type   string `bson:"type"    json:"type"`
 }
 
 type UserHistory struct {
-	UserID string        `bson:"_id" json:"user_id"`
+	UserID string        `bson:"_id"   json:"user_id"`
 	Items  []HistoryItem `bson:"items" json:"items"`
 }
 
 type CollectionHistory struct {
-	CollectionID string             `bson:"_id" json:"collection_id"`
+	CollectionID string             `bson:"_id"   json:"collection_id"`
 	Items        []SmallHistoryItem `bson:"items" json:"items"`
 }
 

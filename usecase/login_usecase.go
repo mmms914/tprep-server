@@ -25,10 +25,12 @@ func (lu *loginUseCase) GetUserByEmail(c context.Context, email string) (domain.
 	return lu.userRepository.GetByEmail(ctx, email)
 }
 
-func (lu *loginUseCase) CreateAccessToken(user *domain.User, secret string, expiry int) (accessToken string, exp time.Time, err error) {
-	return internal.CreateAccessToken(user, secret, expiry)
+func (lu *loginUseCase) CreateAccessToken(user *domain.User, secret string, expiry int) (string, time.Time, error) {
+	accessToken, exp, err := internal.CreateAccessToken(user, secret, expiry)
+	return accessToken, exp, err
 }
 
-func (lu *loginUseCase) CreateRefreshToken(user *domain.User, secret string, expiry int) (refreshToken string, exp time.Time, err error) {
-	return internal.CreateRefreshToken(user, secret, expiry)
+func (lu *loginUseCase) CreateRefreshToken(user *domain.User, secret string, expiry int) (string, time.Time, error) {
+	refreshToken, exp, err := internal.CreateRefreshToken(user, secret, expiry)
+	return refreshToken, exp, err
 }

@@ -2,10 +2,11 @@ package controller
 
 import (
 	"encoding/json"
-	"golang.org/x/crypto/bcrypt"
 	"main/bootstrap"
 	"main/domain"
 	"net/http"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type SignupController struct {
@@ -54,13 +55,21 @@ func (sc *SignupController) Signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	accessToken, expAccess, err := sc.SignupUseCase.CreateAccessToken(user, sc.Env.AccessTokenSecret, sc.Env.AccessTokenExpiryHour)
+	accessToken, expAccess, err := sc.SignupUseCase.CreateAccessToken(
+		user,
+		sc.Env.AccessTokenSecret,
+		sc.Env.AccessTokenExpiryHour,
+	)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
 		return
 	}
 
-	refreshToken, expRefresh, err := sc.SignupUseCase.CreateRefreshToken(user, sc.Env.RefreshTokenSecret, sc.Env.RefreshTokenExpiryHour)
+	refreshToken, expRefresh, err := sc.SignupUseCase.CreateRefreshToken(
+		user,
+		sc.Env.RefreshTokenSecret,
+		sc.Env.RefreshTokenExpiryHour,
+	)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
 		return

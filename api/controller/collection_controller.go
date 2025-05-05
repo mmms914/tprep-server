@@ -2,12 +2,13 @@ package controller
 
 import (
 	"encoding/json"
-	"github.com/go-chi/chi/v5"
 	"main/domain"
 	"net/http"
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/go-chi/chi/v5"
 )
 
 type CollectionController struct {
@@ -188,19 +189,9 @@ func (cc *CollectionController) RemoveLike(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	collectionInfo := domain.CollectionInfo{
-		ID:        collection.ID,
-		Name:      collection.Name,
-		IsPublic:  collection.IsPublic,
-		Cards:     collection.Cards,
-		Author:    collection.Author,
-		Likes:     collection.Likes,
-		Trainings: collection.Trainings,
-	}
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	response := map[string]int{"likes": collectionInfo.Likes}
+	response := map[string]int{"likes": collection.Likes}
 	err = json.NewEncoder(w).Encode(response)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
@@ -218,7 +209,7 @@ func (cc *CollectionController) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if userID != collection.Author && collection.IsPublic == false {
+	if userID != collection.Author && !collection.IsPublic {
 		http.Error(w, jsonError("You are not the owner of this collection"), http.StatusForbidden)
 		return
 	}
@@ -360,7 +351,8 @@ func (cc *CollectionController) CreateCard(w http.ResponseWriter, r *http.Reques
 		http.Error(w, jsonError(err.Error()), http.StatusBadRequest)
 		return
 	}
-	if card.Question == "" || card.Answer == "" || card.OtherAnswers.Items == nil || card.OtherAnswers.Count != len(card.OtherAnswers.Items) {
+	if card.Question == "" || card.Answer == "" || card.OtherAnswers.Items == nil ||
+		card.OtherAnswers.Count != len(card.OtherAnswers.Items) {
 		http.Error(w, jsonError("Invalid body data"), http.StatusBadRequest)
 		return
 	}
@@ -402,7 +394,8 @@ func (cc *CollectionController) UpdateCard(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if card.Question == "" || card.Answer == "" || card.OtherAnswers.Items == nil || card.OtherAnswers.Count != len(card.OtherAnswers.Items) {
+	if card.Question == "" || card.Answer == "" || card.OtherAnswers.Items == nil ||
+		card.OtherAnswers.Count != len(card.OtherAnswers.Items) {
 		http.Error(w, jsonError("Invalid body data"), http.StatusBadRequest)
 		return
 	}
@@ -502,13 +495,23 @@ func (cc *CollectionController) AddTraining(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	if historyItem.AllCardsCount == 0 || historyItem.CollectionName == "" || historyItem.CollectionID == "" || historyItem.AllCardsCount < len(historyItem.CorrectCards) {
-		http.Error(w, jsonError("Invalid body data. Check all_cards_count/collection_name/collection_id"), http.StatusBadRequest)
+	if historyItem.AllCardsCount == 0 || historyItem.CollectionName == "" || historyItem.CollectionID == "" ||
+		historyItem.AllCardsCount < len(historyItem.CorrectCards) {
+		http.Error(
+			w,
+			jsonError("Invalid body data. Check all_cards_count/collection_name/collection_id"),
+			http.StatusBadRequest,
+		)
 		return
 	}
 
-	if historyItem.IncorrectCards == nil || historyItem.CorrectCards == nil || historyItem.Errors == nil || historyItem.RightAnswers == nil {
-		http.Error(w, jsonError("Invalid body data. Check errors/right_answers/(in)correct_cards"), http.StatusBadRequest)
+	if historyItem.IncorrectCards == nil || historyItem.CorrectCards == nil || historyItem.Errors == nil ||
+		historyItem.RightAnswers == nil {
+		http.Error(
+			w,
+			jsonError("Invalid body data. Check errors/right_answers/(in)correct_cards"),
+			http.StatusBadRequest,
+		)
 		return
 	}
 
@@ -559,8 +562,9 @@ func (cc *CollectionController) GetCardPicture(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	if coll.IsPublic == false {
-		user, err := cc.UserUseCase.GetByID(r.Context(), authID)
+	if !coll.IsPublic {
+		var user domain.User
+		user, err = cc.UserUseCase.GetByID(r.Context(), authID)
 		if err != nil {
 			http.Error(w, jsonError(err.Error()), http.StatusNotFound)
 			return
@@ -587,6 +591,7 @@ func (cc *CollectionController) GetCardPicture(w http.ResponseWriter, r *http.Re
 	}
 }
 
+//nolint:mnd // 5 MB
 func (cc *CollectionController) UploadCardPicture(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(5 << 20)
 	if err != nil {
@@ -606,6 +611,7 @@ func (cc *CollectionController) UploadCardPicture(w http.ResponseWriter, r *http
 		return
 	}
 
+	//nolint:staticcheck // business logic
 	if !(strings.HasSuffix(handler.Filename, ".jpg") || strings.HasSuffix(handler.Filename, ".jpeg")) {
 		http.Error(w, jsonError("Image's extension should be JPG/JPEG"), http.StatusBadRequest)
 		return

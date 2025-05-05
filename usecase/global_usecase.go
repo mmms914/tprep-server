@@ -20,6 +20,6 @@ func (gu *globalUseCase) GetTrainingPlan(start int, end int, preferredTime int) 
 	return internal.CalculateTrainingPlan(start, end, preferredTime)
 }
 
-func (gu *globalUseCase) TrackFavouriteButtons(filterClicks int, profileClicks int) error {
+func (gu *globalUseCase) TrackFavouriteButtons(_ int, _ int) error {
 	return nil
 }

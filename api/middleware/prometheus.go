@@ -1,23 +1,24 @@
 package middleware
 
 import (
+	"net/http"
+	"strconv"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	"net/http"
-	"strconv"
 )
 
-type responseWriter struct {
+type ResponseWriter struct {
 	http.ResponseWriter
 	statusCode int
 }
 
-func NewResponseWriter(w http.ResponseWriter) *responseWriter {
-	return &responseWriter{w, http.StatusOK}
+func NewResponseWriter(w http.ResponseWriter) *ResponseWriter {
+	return &ResponseWriter{w, http.StatusOK}
 }
 
-func (rw *responseWriter) WriteHeader(code int) {
+func (rw *ResponseWriter) WriteHeader(code int) {
 	rw.statusCode = code
 	rw.ResponseWriter.WriteHeader(code)
 }
@@ -40,7 +41,7 @@ var FavouriteButtonClicks = prometheus.NewCounterVec(
 
 var responseStatus = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
-		Name: "response_status",
+		Name: "response_status_total",
 		Help: "Status of HTTP response",
 	},
 	[]string{"status"},
@@ -68,6 +69,7 @@ func PrometheusMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+//nolint:gochecknoinits // middleware
 func init() {
 	prometheus.Register(FavouriteButtonClicks)
 	prometheus.Register(totalRequests)

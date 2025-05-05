@@ -33,13 +33,21 @@ func (rtc *RefreshTokenController) RefreshToken(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	accessToken, expAccess, err := rtc.RefreshTokenUseCase.CreateAccessToken(&user, rtc.Env.AccessTokenSecret, rtc.Env.AccessTokenExpiryHour)
+	accessToken, expAccess, err := rtc.RefreshTokenUseCase.CreateAccessToken(
+		&user,
+		rtc.Env.AccessTokenSecret,
+		rtc.Env.AccessTokenExpiryHour,
+	)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
 		return
 	}
 
-	refreshToken, expRefresh, err := rtc.RefreshTokenUseCase.CreateRefreshToken(&user, rtc.Env.RefreshTokenSecret, rtc.Env.RefreshTokenExpiryHour)
+	refreshToken, expRefresh, err := rtc.RefreshTokenUseCase.CreateRefreshToken(
+		&user,
+		rtc.Env.RefreshTokenSecret,
+		rtc.Env.RefreshTokenExpiryHour,
+	)
 	if err != nil {
 		http.Error(w, jsonError(err.Error()), http.StatusInternalServerError)
 		return
