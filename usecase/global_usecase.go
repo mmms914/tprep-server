@@ -19,3 +19,7 @@ func NewGlobalUseCase(timeout time.Duration) domain.GlobalUseCase {
 func (gu *globalUseCase) GetTrainingPlan(start int, end int, preferredTime int) []int {
 	return internal.CalculateTrainingPlan(start, end, preferredTime)
 }
+
+func (gu *globalUseCase) TrackFavouriteButtons(filterClicks int, profileClicks int) error {
+	return nil
+}

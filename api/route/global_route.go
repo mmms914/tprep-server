@@ -15,5 +15,5 @@ func NewGlobalRouter(env *bootstrap.Env, timeout time.Duration, r chi.Router) {
 	}
 
 	r.Get("/global/getTrainingPlan", gc.GetTrainingPlan)
-
+	r.Post("/global/trackFavourites", gc.TrackFavouriteButtons)
 }

@@ -30,6 +30,14 @@ var totalRequests = prometheus.NewCounterVec(
 	[]string{"path"},
 )
 
+var FavouriteButtonClicks = prometheus.NewCounterVec(
+	prometheus.CounterOpts{
+		Name: "favourite_button_clicks_total",
+		Help: "The number of clicks on the 'Favourites' buttons, by type",
+	},
+	[]string{"button_type"},
+)
+
 var responseStatus = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
 		Name: "response_status",
@@ -61,6 +69,7 @@ func PrometheusMiddleware(next http.Handler) http.Handler {
 }
 
 func init() {
+	prometheus.Register(FavouriteButtonClicks)
 	prometheus.Register(totalRequests)
 	prometheus.Register(responseStatus)
 	prometheus.Register(httpDuration)

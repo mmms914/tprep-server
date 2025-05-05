@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"main/api/middleware"
 	"main/bootstrap"
 	"main/domain"
 	"net/http"
@@ -46,4 +47,20 @@ func (gc *GlobalController) GetTrainingPlan(w http.ResponseWriter, r *http.Reque
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(planResponse)
+}
+func (gc *GlobalController) TrackFavouriteButtons(w http.ResponseWriter, r *http.Request) {
+	var req domain.FavouriteButtonRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, jsonError("Invalid data"), http.StatusBadRequest)
+		return
+	}
+	if req.FilterClicks < 0 || req.ProfileClicks < 0 {
+		http.Error(w, jsonError("The quantity cannot be negative"), http.StatusBadRequest)
+		return
+	}
+	middleware.FavouriteButtonClicks.WithLabelValues("filter_favourite_button").Add(float64(req.FilterClicks))
+	middleware.FavouriteButtonClicks.WithLabelValues("profile_favourite_button").Add(float64(req.ProfileClicks))
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 }
