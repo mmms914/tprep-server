@@ -60,7 +60,8 @@ func (gc *GlobalController) AddMetrics(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, jsonError("Invalid data"), http.StatusBadRequest)
 		return
 	}
-	if req.FilterClicks < 0 || req.ProfileClicks < 0 || req.LastInAppTime < 0 || req.SumTrainingsTime < 0 || req.TrainingsCount < 0 {
+	if req.FilterClicks < 0 || req.ProfileClicks < 0 || req.LastInAppTime < 0 || req.SumTrainingsTime < 0 ||
+		req.TrainingsCount < 0 {
 		http.Error(w, jsonError("Metrics cannot be negative"), http.StatusBadRequest)
 		return
 	}
