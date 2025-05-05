@@ -37,12 +37,10 @@ func TestCollectionController_Create_Success(t *testing.T) {
 		Author:   userID,
 	}
 
-	mockCollUseCase.On("Create", mock.Anything, &collection).
+	mockCollUseCase.On("Create", mock.Anything, &collection, userID).
 		Return(createdID, nil)
 	mockCollUseCase.On("GetByID", mock.Anything, createdID).
 		Return(fullCollection, nil)
-	mockUserUseCase.On("AddCollection", mock.Anything, userID, createdID, "collections").
-		Return(nil)
 
 	bodyJSON, _ := json.Marshal(collection)
 	req := httptest.NewRequest(http.MethodPost, "/collection", strings.NewReader(string(bodyJSON)))
@@ -198,9 +196,7 @@ func TestCollectionController_Delete_Success(t *testing.T) {
 		},
 	}
 	mockCollUseCase.On("GetByID", mock.Anything, collID).Return(collection, nil)
-	mockCollUseCase.On("RemoveCardPicture", mock.Anything, userID, collID, 1, "pic.jpg").Return(nil)
-	mockCollUseCase.On("DeleteByID", mock.Anything, collID).Return(nil)
-	mockUserUseCase.On("DeleteCollection", mock.Anything, userID, collID, "collections").Return(nil)
+	mockCollUseCase.On("DeleteByID", mock.Anything, collID, userID).Return(nil)
 
 	req := httptest.NewRequest(http.MethodDelete, "/collection/{id}", nil)
 	req = req.WithContext(context.WithValue(req.Context(), "x-user-id", userID))

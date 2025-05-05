@@ -29,11 +29,13 @@ require (
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
+	github.com/josharian/intern v1.0.0 // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect
 	github.com/klauspost/compress v1.17.11 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.9 // indirect
 	github.com/lithammer/fuzzysearch v1.1.5 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
+	github.com/mailru/easyjson v0.9.0 // indirect
 	github.com/mattn/go-runewidth v0.0.14 // indirect
 	github.com/minio/crc64nvme v1.0.1 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect

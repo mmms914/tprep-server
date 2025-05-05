@@ -44,9 +44,9 @@ func (_m *CollectionUseCase) AddCard(c context.Context, collectionID string, car
 	return r0, r1
 }
 
-// AddLike provides a mock function with given fields: c, collectionID
-func (_m *CollectionUseCase) AddLike(c context.Context, collectionID string) (*domain.Collection, error) {
-	ret := _m.Called(c, collectionID)
+// AddLike provides a mock function with given fields: c, collectionID, userID
+func (_m *CollectionUseCase) AddLike(c context.Context, collectionID string, userID string) (*domain.Collection, error) {
+	ret := _m.Called(c, collectionID, userID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddLike")
@@ -54,19 +54,19 @@ func (_m *CollectionUseCase) AddLike(c context.Context, collectionID string) (*d
 
 	var r0 *domain.Collection
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*domain.Collection, error)); ok {
-		return rf(c, collectionID)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*domain.Collection, error)); ok {
+		return rf(c, collectionID, userID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *domain.Collection); ok {
-		r0 = rf(c, collectionID)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *domain.Collection); ok {
+		r0 = rf(c, collectionID, userID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*domain.Collection)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(c, collectionID)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(c, collectionID, userID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -74,9 +74,9 @@ func (_m *CollectionUseCase) AddLike(c context.Context, collectionID string) (*d
 	return r0, r1
 }
 
-// Create provides a mock function with given fields: c, collection
-func (_m *CollectionUseCase) Create(c context.Context, collection *domain.Collection) (string, error) {
-	ret := _m.Called(c, collection)
+// Create provides a mock function with given fields: c, collection, userID
+func (_m *CollectionUseCase) Create(c context.Context, collection *domain.Collection, userID string) (string, error) {
+	ret := _m.Called(c, collection, userID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Create")
@@ -84,17 +84,17 @@ func (_m *CollectionUseCase) Create(c context.Context, collection *domain.Collec
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *domain.Collection) (string, error)); ok {
-		return rf(c, collection)
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.Collection, string) (string, error)); ok {
+		return rf(c, collection, userID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *domain.Collection) string); ok {
-		r0 = rf(c, collection)
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.Collection, string) string); ok {
+		r0 = rf(c, collection, userID)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *domain.Collection) error); ok {
-		r1 = rf(c, collection)
+	if rf, ok := ret.Get(1).(func(context.Context, *domain.Collection, string) error); ok {
+		r1 = rf(c, collection, userID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -102,17 +102,17 @@ func (_m *CollectionUseCase) Create(c context.Context, collection *domain.Collec
 	return r0, r1
 }
 
-// DeleteByID provides a mock function with given fields: c, collectionID
-func (_m *CollectionUseCase) DeleteByID(c context.Context, collectionID string) error {
-	ret := _m.Called(c, collectionID)
+// DeleteByID provides a mock function with given fields: c, collectionID, userID
+func (_m *CollectionUseCase) DeleteByID(c context.Context, collectionID string, userID string) error {
+	ret := _m.Called(c, collectionID, userID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteByID")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(c, collectionID)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = rf(c, collectionID, userID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -232,9 +232,9 @@ func (_m *CollectionUseCase) RemoveCardPicture(c context.Context, userID string,
 	return r0
 }
 
-// RemoveLike provides a mock function with given fields: c, collectionID
-func (_m *CollectionUseCase) RemoveLike(c context.Context, collectionID string) (*domain.Collection, error) {
-	ret := _m.Called(c, collectionID)
+// RemoveLike provides a mock function with given fields: c, collectionID, userID
+func (_m *CollectionUseCase) RemoveLike(c context.Context, collectionID string, userID string) (*domain.Collection, error) {
+	ret := _m.Called(c, collectionID, userID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveLike")
@@ -242,19 +242,19 @@ func (_m *CollectionUseCase) RemoveLike(c context.Context, collectionID string) 
 
 	var r0 *domain.Collection
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*domain.Collection, error)); ok {
-		return rf(c, collectionID)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*domain.Collection, error)); ok {
+		return rf(c, collectionID, userID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *domain.Collection); ok {
-		r0 = rf(c, collectionID)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *domain.Collection); ok {
+		r0 = rf(c, collectionID, userID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*domain.Collection)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(c, collectionID)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(c, collectionID, userID)
 	} else {
 		r1 = ret.Error(1)
 	}

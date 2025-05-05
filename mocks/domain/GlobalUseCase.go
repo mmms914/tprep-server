@@ -29,6 +29,24 @@ func (_m *GlobalUseCase) GetTrainingPlan(start int, end int, preferredTime int) 
 	return r0
 }
 
+// TrackFavouriteButtons provides a mock function with given fields: filterClicks, profileClicks
+func (_m *GlobalUseCase) TrackFavouriteButtons(filterClicks int, profileClicks int) error {
+	ret := _m.Called(filterClicks, profileClicks)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TrackFavouriteButtons")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(int, int) error); ok {
+		r0 = rf(filterClicks, profileClicks)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // NewGlobalUseCase creates a new instance of GlobalUseCase. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewGlobalUseCase(t interface {

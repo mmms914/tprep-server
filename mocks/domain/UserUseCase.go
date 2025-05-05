@@ -16,24 +16,6 @@ type UserUseCase struct {
 	mock.Mock
 }
 
-// AddCollection provides a mock function with given fields: c, userID, collectionID, collectionType
-func (_m *UserUseCase) AddCollection(c context.Context, userID string, collectionID string, collectionType string) error {
-	ret := _m.Called(c, userID, collectionID, collectionType)
-
-	if len(ret) == 0 {
-		panic("no return value specified for AddCollection")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) error); ok {
-		r0 = rf(c, userID, collectionID, collectionType)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // DeleteByID provides a mock function with given fields: c, userID
 func (_m *UserUseCase) DeleteByID(c context.Context, userID string) error {
 	ret := _m.Called(c, userID)
@@ -45,24 +27,6 @@ func (_m *UserUseCase) DeleteByID(c context.Context, userID string) error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
 		r0 = rf(c, userID)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// DeleteCollection provides a mock function with given fields: c, userID, collectionID, collectionType
-func (_m *UserUseCase) DeleteCollection(c context.Context, userID string, collectionID string, collectionType string) error {
-	ret := _m.Called(c, userID, collectionID, collectionType)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeleteCollection")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) error); ok {
-		r0 = rf(c, userID, collectionID, collectionType)
 	} else {
 		r0 = ret.Error(0)
 	}

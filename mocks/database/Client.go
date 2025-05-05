@@ -70,6 +70,36 @@ func (_m *Client) Ping(_a0 context.Context) error {
 	return r0
 }
 
+// StartSession provides a mock function with no fields
+func (_m *Client) StartSession() (database.Session, error) {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for StartSession")
+	}
+
+	var r0 database.Session
+	var r1 error
+	if rf, ok := ret.Get(0).(func() (database.Session, error)); ok {
+		return rf()
+	}
+	if rf, ok := ret.Get(0).(func() database.Session); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(database.Session)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewClient creates a new instance of Client. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewClient(t interface {
