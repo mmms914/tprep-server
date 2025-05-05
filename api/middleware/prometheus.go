@@ -1,12 +1,11 @@
 package middleware
 
 import (
-	"net/http"
-	"strconv"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"net/http"
+	"strconv"
 )
 
 type ResponseWriter struct {
@@ -37,6 +36,23 @@ var FavouriteButtonClicks = prometheus.NewCounterVec(
 		Help: "The number of clicks on the 'Favourites' buttons, by type",
 	},
 	[]string{"button_type"},
+)
+
+var UserTime = prometheus.NewHistogramVec(
+	prometheus.HistogramOpts{
+		Name:    "user_time_seconds",
+		Help:    "The time that user spent, by type",
+		Buckets: []float64{60, 180, 300, 600, 1800},
+	},
+	[]string{"time_type"},
+)
+
+var TrainingsCount = prometheus.NewHistogram(
+	prometheus.HistogramOpts{
+		Name:    "user_trainings_count",
+		Help:    "The count of trainings in last using",
+		Buckets: []float64{0, 1, 2, 3, 4, 5, 10},
+	},
 )
 
 var responseStatus = prometheus.NewCounterVec(
@@ -72,6 +88,8 @@ func PrometheusMiddleware(next http.Handler) http.Handler {
 //nolint:gochecknoinits // middleware
 func init() {
 	prometheus.Register(FavouriteButtonClicks)
+	prometheus.Register(UserTime)
+	prometheus.Register(TrainingsCount)
 	prometheus.Register(totalRequests)
 	prometheus.Register(responseStatus)
 	prometheus.Register(httpDuration)

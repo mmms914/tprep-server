@@ -1723,7 +1723,101 @@ func (v *OtherAnswers) UnmarshalJSON(data []byte) error {
 func (v *OtherAnswers) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjson3e1fa5ecDecodeMainDomain16(l, v)
 }
-func easyjson3e1fa5ecDecodeMainDomain17(in *jlexer.Lexer, out *LoginResponse) {
+func easyjson3e1fa5ecDecodeMainDomain17(in *jlexer.Lexer, out *MetricsRequest) {
+	isTopLevel := in.IsStart()
+	if in.IsNull() {
+		if isTopLevel {
+			in.Consumed()
+		}
+		in.Skip()
+		return
+	}
+	in.Delim('{')
+	for !in.IsDelim('}') {
+		key := in.UnsafeFieldName(false)
+		in.WantColon()
+		if in.IsNull() {
+			in.Skip()
+			in.WantComma()
+			continue
+		}
+		switch key {
+		case "favourite_filter_button":
+			out.FilterClicks = int(in.Int())
+		case "favourite_profile_button":
+			out.ProfileClicks = int(in.Int())
+		case "last_in_app_time":
+			out.LastInAppTime = int(in.Int())
+		case "sum_trainings_time":
+			out.SumTrainingsTime = int(in.Int())
+		case "trainings_count":
+			out.TrainingsCount = int(in.Int())
+		default:
+			in.SkipRecursive()
+		}
+		in.WantComma()
+	}
+	in.Delim('}')
+	if isTopLevel {
+		in.Consumed()
+	}
+}
+func easyjson3e1fa5ecEncodeMainDomain17(out *jwriter.Writer, in MetricsRequest) {
+	out.RawByte('{')
+	first := true
+	_ = first
+	{
+		const prefix string = ",\"favourite_filter_button\":"
+		out.RawString(prefix[1:])
+		out.Int(int(in.FilterClicks))
+	}
+	{
+		const prefix string = ",\"favourite_profile_button\":"
+		out.RawString(prefix)
+		out.Int(int(in.ProfileClicks))
+	}
+	{
+		const prefix string = ",\"last_in_app_time\":"
+		out.RawString(prefix)
+		out.Int(int(in.LastInAppTime))
+	}
+	{
+		const prefix string = ",\"sum_trainings_time\":"
+		out.RawString(prefix)
+		out.Int(int(in.SumTrainingsTime))
+	}
+	{
+		const prefix string = ",\"trainings_count\":"
+		out.RawString(prefix)
+		out.Int(int(in.TrainingsCount))
+	}
+	out.RawByte('}')
+}
+
+// MarshalJSON supports json.Marshaler interface
+func (v MetricsRequest) MarshalJSON() ([]byte, error) {
+	w := jwriter.Writer{}
+	easyjson3e1fa5ecEncodeMainDomain17(&w, v)
+	return w.Buffer.BuildBytes(), w.Error
+}
+
+// MarshalEasyJSON supports easyjson.Marshaler interface
+func (v MetricsRequest) MarshalEasyJSON(w *jwriter.Writer) {
+	easyjson3e1fa5ecEncodeMainDomain17(w, v)
+}
+
+// UnmarshalJSON supports json.Unmarshaler interface
+func (v *MetricsRequest) UnmarshalJSON(data []byte) error {
+	r := jlexer.Lexer{Data: data}
+	easyjson3e1fa5ecDecodeMainDomain17(&r, v)
+	return r.Error()
+}
+
+// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
+func (v *MetricsRequest) UnmarshalEasyJSON(l *jlexer.Lexer) {
+	easyjson3e1fa5ecDecodeMainDomain17(l, v)
+}
+func easyjson3e1fa5ecDecodeMainDomain18(in *jlexer.Lexer, out *LoginResponse) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -1756,7 +1850,7 @@ func easyjson3e1fa5ecDecodeMainDomain17(in *jlexer.Lexer, out *LoginResponse) {
 		in.Consumed()
 	}
 }
-func easyjson3e1fa5ecEncodeMainDomain17(out *jwriter.Writer, in LoginResponse) {
+func easyjson3e1fa5ecEncodeMainDomain18(out *jwriter.Writer, in LoginResponse) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -1776,27 +1870,27 @@ func easyjson3e1fa5ecEncodeMainDomain17(out *jwriter.Writer, in LoginResponse) {
 // MarshalJSON supports json.Marshaler interface
 func (v LoginResponse) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson3e1fa5ecEncodeMainDomain17(&w, v)
+	easyjson3e1fa5ecEncodeMainDomain18(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v LoginResponse) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson3e1fa5ecEncodeMainDomain17(w, v)
+	easyjson3e1fa5ecEncodeMainDomain18(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *LoginResponse) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson3e1fa5ecDecodeMainDomain17(&r, v)
+	easyjson3e1fa5ecDecodeMainDomain18(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *LoginResponse) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson3e1fa5ecDecodeMainDomain17(l, v)
+	easyjson3e1fa5ecDecodeMainDomain18(l, v)
 }
-func easyjson3e1fa5ecDecodeMainDomain18(in *jlexer.Lexer, out *LoginRequest) {
+func easyjson3e1fa5ecDecodeMainDomain19(in *jlexer.Lexer, out *LoginRequest) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -1829,7 +1923,7 @@ func easyjson3e1fa5ecDecodeMainDomain18(in *jlexer.Lexer, out *LoginRequest) {
 		in.Consumed()
 	}
 }
-func easyjson3e1fa5ecEncodeMainDomain18(out *jwriter.Writer, in LoginRequest) {
+func easyjson3e1fa5ecEncodeMainDomain19(out *jwriter.Writer, in LoginRequest) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -1849,27 +1943,27 @@ func easyjson3e1fa5ecEncodeMainDomain18(out *jwriter.Writer, in LoginRequest) {
 // MarshalJSON supports json.Marshaler interface
 func (v LoginRequest) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson3e1fa5ecEncodeMainDomain18(&w, v)
+	easyjson3e1fa5ecEncodeMainDomain19(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v LoginRequest) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson3e1fa5ecEncodeMainDomain18(w, v)
+	easyjson3e1fa5ecEncodeMainDomain19(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *LoginRequest) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson3e1fa5ecDecodeMainDomain18(&r, v)
+	easyjson3e1fa5ecDecodeMainDomain19(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *LoginRequest) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson3e1fa5ecDecodeMainDomain18(l, v)
+	easyjson3e1fa5ecDecodeMainDomain19(l, v)
 }
-func easyjson3e1fa5ecDecodeMainDomain19(in *jlexer.Lexer, out *JwtCustomRefreshClaims) {
+func easyjson3e1fa5ecDecodeMainDomain20(in *jlexer.Lexer, out *JwtCustomRefreshClaims) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -1944,7 +2038,7 @@ func easyjson3e1fa5ecDecodeMainDomain19(in *jlexer.Lexer, out *JwtCustomRefreshC
 		in.Consumed()
 	}
 }
-func easyjson3e1fa5ecEncodeMainDomain19(out *jwriter.Writer, in JwtCustomRefreshClaims) {
+func easyjson3e1fa5ecEncodeMainDomain20(out *jwriter.Writer, in JwtCustomRefreshClaims) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -1989,27 +2083,27 @@ func easyjson3e1fa5ecEncodeMainDomain19(out *jwriter.Writer, in JwtCustomRefresh
 // MarshalJSON supports json.Marshaler interface
 func (v JwtCustomRefreshClaims) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson3e1fa5ecEncodeMainDomain19(&w, v)
+	easyjson3e1fa5ecEncodeMainDomain20(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v JwtCustomRefreshClaims) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson3e1fa5ecEncodeMainDomain19(w, v)
+	easyjson3e1fa5ecEncodeMainDomain20(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *JwtCustomRefreshClaims) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson3e1fa5ecDecodeMainDomain19(&r, v)
+	easyjson3e1fa5ecDecodeMainDomain20(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *JwtCustomRefreshClaims) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson3e1fa5ecDecodeMainDomain19(l, v)
+	easyjson3e1fa5ecDecodeMainDomain20(l, v)
 }
-func easyjson3e1fa5ecDecodeMainDomain20(in *jlexer.Lexer, out *JwtCustomClaims) {
+func easyjson3e1fa5ecDecodeMainDomain21(in *jlexer.Lexer, out *JwtCustomClaims) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -2086,7 +2180,7 @@ func easyjson3e1fa5ecDecodeMainDomain20(in *jlexer.Lexer, out *JwtCustomClaims) 
 		in.Consumed()
 	}
 }
-func easyjson3e1fa5ecEncodeMainDomain20(out *jwriter.Writer, in JwtCustomClaims) {
+func easyjson3e1fa5ecEncodeMainDomain21(out *jwriter.Writer, in JwtCustomClaims) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -2136,27 +2230,27 @@ func easyjson3e1fa5ecEncodeMainDomain20(out *jwriter.Writer, in JwtCustomClaims)
 // MarshalJSON supports json.Marshaler interface
 func (v JwtCustomClaims) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson3e1fa5ecEncodeMainDomain20(&w, v)
+	easyjson3e1fa5ecEncodeMainDomain21(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v JwtCustomClaims) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson3e1fa5ecEncodeMainDomain20(w, v)
+	easyjson3e1fa5ecEncodeMainDomain21(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *JwtCustomClaims) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson3e1fa5ecDecodeMainDomain20(&r, v)
+	easyjson3e1fa5ecDecodeMainDomain21(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *JwtCustomClaims) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson3e1fa5ecDecodeMainDomain20(l, v)
+	easyjson3e1fa5ecDecodeMainDomain21(l, v)
 }
-func easyjson3e1fa5ecDecodeMainDomain21(in *jlexer.Lexer, out *HistoryItem) {
+func easyjson3e1fa5ecDecodeMainDomain22(in *jlexer.Lexer, out *HistoryItem) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -2285,7 +2379,7 @@ func easyjson3e1fa5ecDecodeMainDomain21(in *jlexer.Lexer, out *HistoryItem) {
 		in.Consumed()
 	}
 }
-func easyjson3e1fa5ecEncodeMainDomain21(out *jwriter.Writer, in HistoryItem) {
+func easyjson3e1fa5ecEncodeMainDomain22(out *jwriter.Writer, in HistoryItem) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -2379,97 +2473,24 @@ func easyjson3e1fa5ecEncodeMainDomain21(out *jwriter.Writer, in HistoryItem) {
 // MarshalJSON supports json.Marshaler interface
 func (v HistoryItem) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson3e1fa5ecEncodeMainDomain21(&w, v)
-	return w.Buffer.BuildBytes(), w.Error
-}
-
-// MarshalEasyJSON supports easyjson.Marshaler interface
-func (v HistoryItem) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson3e1fa5ecEncodeMainDomain21(w, v)
-}
-
-// UnmarshalJSON supports json.Unmarshaler interface
-func (v *HistoryItem) UnmarshalJSON(data []byte) error {
-	r := jlexer.Lexer{Data: data}
-	easyjson3e1fa5ecDecodeMainDomain21(&r, v)
-	return r.Error()
-}
-
-// UnmarshalEasyJSON supports easyjson.Unmarshaler interface
-func (v *HistoryItem) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson3e1fa5ecDecodeMainDomain21(l, v)
-}
-func easyjson3e1fa5ecDecodeMainDomain22(in *jlexer.Lexer, out *FavouriteButtonRequest) {
-	isTopLevel := in.IsStart()
-	if in.IsNull() {
-		if isTopLevel {
-			in.Consumed()
-		}
-		in.Skip()
-		return
-	}
-	in.Delim('{')
-	for !in.IsDelim('}') {
-		key := in.UnsafeFieldName(false)
-		in.WantColon()
-		if in.IsNull() {
-			in.Skip()
-			in.WantComma()
-			continue
-		}
-		switch key {
-		case "favourite_filter_button":
-			out.FilterClicks = int(in.Int())
-		case "favourite_profile_button":
-			out.ProfileClicks = int(in.Int())
-		default:
-			in.SkipRecursive()
-		}
-		in.WantComma()
-	}
-	in.Delim('}')
-	if isTopLevel {
-		in.Consumed()
-	}
-}
-func easyjson3e1fa5ecEncodeMainDomain22(out *jwriter.Writer, in FavouriteButtonRequest) {
-	out.RawByte('{')
-	first := true
-	_ = first
-	{
-		const prefix string = ",\"favourite_filter_button\":"
-		out.RawString(prefix[1:])
-		out.Int(int(in.FilterClicks))
-	}
-	{
-		const prefix string = ",\"favourite_profile_button\":"
-		out.RawString(prefix)
-		out.Int(int(in.ProfileClicks))
-	}
-	out.RawByte('}')
-}
-
-// MarshalJSON supports json.Marshaler interface
-func (v FavouriteButtonRequest) MarshalJSON() ([]byte, error) {
-	w := jwriter.Writer{}
 	easyjson3e1fa5ecEncodeMainDomain22(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
-func (v FavouriteButtonRequest) MarshalEasyJSON(w *jwriter.Writer) {
+func (v HistoryItem) MarshalEasyJSON(w *jwriter.Writer) {
 	easyjson3e1fa5ecEncodeMainDomain22(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
-func (v *FavouriteButtonRequest) UnmarshalJSON(data []byte) error {
+func (v *HistoryItem) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
 	easyjson3e1fa5ecDecodeMainDomain22(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
-func (v *FavouriteButtonRequest) UnmarshalEasyJSON(l *jlexer.Lexer) {
+func (v *HistoryItem) UnmarshalEasyJSON(l *jlexer.Lexer) {
 	easyjson3e1fa5ecDecodeMainDomain22(l, v)
 }
 func easyjson3e1fa5ecDecodeMainDomain23(in *jlexer.Lexer, out *ErrorItem) {

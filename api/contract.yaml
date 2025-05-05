@@ -83,30 +83,25 @@ paths:
                     message:
                       type: string
                       example: "*custom error*"
-  /global/trackFavourite:
+        security:
+            - bearerAuth: []
+  /global/addMetrics:
     post:
       tags:
         - global
-      summary: Увеличение счетчика нажатий на "избранное"
-      operationId: trackFavourite
+      summary: Добавление метрик
+      operationId: addMetrics
       requestBody:
-        description: JSON-объект
+        description: JSON-объект (описание приведено во вкладке Schema)
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                favourite_filter_button:
-                  type: integer
-                  example: 20
-                favourite_profile_button:
-                  type: integer
-                  example: 13
+                $ref: '#/components/schemas/Metrics'
       responses:
         '200':
-          description: Успешно прибавлено к метрике
+          description: Метрики успешно добавлены
         '400':
-          description: Bad request
+          description: Недопустимые значения метрик
           content:
             application/json:
               schema:
@@ -115,6 +110,8 @@ paths:
                   message:
                     type: string
                     example: Invalid data
+      security:
+        - bearerAuth: []
   /public/signup:
     post:
       tags:
@@ -1709,6 +1706,30 @@ components:
             medium_percentage:
               type: integer
               example: 99
+    Metrics:
+      type: object
+      description: Все метрики должны обнуляться после отправки на сервер
+      properties:
+        favourite_filter_button:
+          type: integer
+          description: количество кликов по кнопке фильтра "Избранное"
+          example: 5
+        favourite_profile_button:
+          type: integer
+          description: количество кликов по кнопке "Открыть избранные колоды"
+          example: 2
+        last_in_app_time:
+          type: integer
+          description: суммарное время, проведенное в приложении, в последний раз (от захода до выхода, в секундах)
+          example: 5321
+        sum_trainings_time:
+          type: integer
+          description: суммарное время, проведенное в тренировках (от захода до выхода, в секундах)
+          example: 134
+        trainings_count:
+          type: integer
+          description: количество тренировок за последний запуск приложения
+          example: 1
     PictureUploaded:
       type: object
       properties:
