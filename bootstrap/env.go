@@ -10,12 +10,12 @@ import (
 type Env struct {
 	Port int `mapstructure:"PORT"`
 
-	DBName string `mapstructure:"DB_NAME"`
-	DBPort int    `mapstructure:"DB_PORT"`
+	DBName   string `mapstructure:"DB_NAME"`
+	DBPort   int    `mapstructure:"DB_PORT"`
+	MongoDir string `mapstructure:"MONGO_DIR"`
 
-	MinioPort int    `mapstructure:"MINIO_PORT"`
-	MongoDir  string `mapstructure:"MONGO_DIR"`
-
+	MinioPort         int    `mapstructure:"MINIO_PORT"`
+	MinioDir          string `mapstructure:"MINIO_DIR"`
 	MinioRootUser     string `mapstructure:"MINIO_ROOT_USER"`
 	MinioRootPassword string `mapstructure:"MINIO_ROOT_PASSWORD"`
 
