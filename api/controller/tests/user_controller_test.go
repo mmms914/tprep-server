@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/mailru/easyjson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"golang.org/x/crypto/bcrypt"
@@ -61,7 +62,7 @@ func TestUserController_Get_OwnProfile(t *testing.T) {
 	body, _ := io.ReadAll(res.Body)
 
 	var userInfo domain.UserInfo
-	err := json.Unmarshal(body, &userInfo)
+	err := easyjson.Unmarshal(body, &userInfo)
 	assert.NoError(t, err)
 	assert.Equal(t, userID, userInfo.ID)
 	assert.Equal(t, "johndoe", userInfo.Username)
@@ -116,7 +117,7 @@ func TestUserController_SignUp_Success(t *testing.T) {
 		Email:    "NewUser@example.com",
 		Password: "qwerty123",
 	}
-	bodyJSON, _ := json.Marshal(reqBody)
+	bodyJSON, _ := easyjson.Marshal(reqBody)
 
 	mockUseCase.On("GetUserByEmail", mock.Anything, reqBody.Email).
 		Return(domain.User{}, errors.New("User with this email already exists"))
@@ -171,7 +172,7 @@ func TestUserController_SignUp_MissingField(t *testing.T) {
 		Email:    "",
 		Password: "qwerty123",
 	}
-	bodyJSON, _ := json.Marshal(reqBody)
+	bodyJSON, _ := easyjson.Marshal(reqBody)
 	req := httptest.NewRequest(http.MethodPost, "/public/signup", strings.NewReader(string(bodyJSON)))
 	rr := httptest.NewRecorder()
 	controller.Signup(rr, req)
@@ -191,7 +192,7 @@ func TestUserController_SignUp_UserAlreadyExists(t *testing.T) {
 		Email:    "existing@example.com",
 		Password: "qwerty123",
 	}
-	bodyJSON, _ := json.Marshal(reqBody)
+	bodyJSON, _ := easyjson.Marshal(reqBody)
 	mockUseCase.On("GetUserByEmail", mock.Anything, reqBody.Email).Return(domain.User{}, nil)
 	req := httptest.NewRequest(http.MethodPost, "/public/signup", strings.NewReader(string(bodyJSON)))
 	rr := httptest.NewRecorder()
@@ -225,7 +226,7 @@ func TestUserController_Login_Success(t *testing.T) {
 		Email:    user.Email,
 		Password: password,
 	}
-	bodyJSON, _ := json.Marshal(reqBody)
+	bodyJSON, _ := easyjson.Marshal(reqBody)
 
 	mockUseCase.On("GetUserByEmail", mock.Anything, reqBody.Email).
 		Return(user, nil)
@@ -274,7 +275,7 @@ func TestUserController_Login_UserNotFound(t *testing.T) {
 		Email:    "notfound@example.com",
 		Password: "password",
 	}
-	bodyJSON, _ := json.Marshal(reqBody)
+	bodyJSON, _ := easyjson.Marshal(reqBody)
 	mockUseCase.On("GetUserByEmail", mock.Anything, "notfound@example.com").
 		Return(domain.User{}, errors.New("User with this email not found"))
 	req := httptest.NewRequest(http.MethodPost, "/public/login", strings.NewReader(string(bodyJSON)))
@@ -302,7 +303,7 @@ func TestUserController_Login_WrongPassword(t *testing.T) {
 		Email:    user.Email,
 		Password: "wrong-password",
 	}
-	bodyJSON, _ := json.Marshal(reqBody)
+	bodyJSON, _ := easyjson.Marshal(reqBody)
 	mockUseCase.On("GetUserByEmail", mock.Anything, user.Email).Return(user, nil)
 	req := httptest.NewRequest(http.MethodPost, "/public/login", strings.NewReader(string(bodyJSON)))
 	rr := httptest.NewRecorder()
@@ -325,7 +326,7 @@ func TestUserController_Update_Success(t *testing.T) {
 	}
 	mockUseCase.On("PutByID", mock.Anything, userID, &updatedUser).
 		Return(nil)
-	bodyJSON, _ := json.Marshal(updatedUser)
+	bodyJSON, _ := easyjson.Marshal(updatedUser)
 	req := httptest.NewRequest(http.MethodPut, "/user/{id}", strings.NewReader(string(bodyJSON)))
 	ctx := context.WithValue(req.Context(), "x-user-id", userID)
 	req = req.WithContext(ctx)
@@ -369,7 +370,7 @@ func TestUserController_Update_EmptyFields(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			bodyJSON, _ := json.Marshal(tc.user)
+			bodyJSON, _ := easyjson.Marshal(tc.user)
 			req := httptest.NewRequest(http.MethodPut, "/user/{id}", strings.NewReader(string(bodyJSON)))
 			rr := httptest.NewRecorder()
 			controller.Update(rr, req)

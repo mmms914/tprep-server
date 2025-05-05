@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/go-chi/chi/v5"
+	"github.com/mailru/easyjson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"main/api/controller"
@@ -42,7 +43,7 @@ func TestCollectionController_Create_Success(t *testing.T) {
 	mockCollUseCase.On("GetByID", mock.Anything, createdID).
 		Return(fullCollection, nil)
 
-	bodyJSON, _ := json.Marshal(collection)
+	bodyJSON, _ := easyjson.Marshal(collection)
 	req := httptest.NewRequest(http.MethodPost, "/collection", strings.NewReader(string(bodyJSON)))
 	req = req.WithContext(context.WithValue(req.Context(), "x-user-id", userID))
 	rr := httptest.NewRecorder()
@@ -70,7 +71,7 @@ func TestCollectionController_Create_EmptyName(t *testing.T) {
 	invalidCollection := domain.Collection{
 		Name: "",
 	}
-	bodyJSON, _ := json.Marshal(invalidCollection)
+	bodyJSON, _ := easyjson.Marshal(invalidCollection)
 
 	req := httptest.NewRequest(http.MethodPost, "/collection", strings.NewReader(string(bodyJSON)))
 	req = req.WithContext(context.WithValue(req.Context(), "x-user-id", "user-id"))
@@ -98,7 +99,7 @@ func TestCollectionController_Update_Success(t *testing.T) {
 	mockCollUseCase.On("GetByID", mock.Anything, collID).Return(existingCollection, nil)
 	mockCollUseCase.On("PutByID", mock.Anything, collID, &updCollection).Return(nil)
 
-	bodyJSON, _ := json.Marshal(updCollection)
+	bodyJSON, _ := easyjson.Marshal(updCollection)
 	req := httptest.NewRequest(http.MethodPut, "/collection/{id}", strings.NewReader(string(bodyJSON)))
 	req = req.WithContext(context.WithValue(req.Context(), "x-user-id", userID))
 	chiCtx := chi.NewRouteContext()
@@ -118,7 +119,7 @@ func TestCollectionController_Update_Success(t *testing.T) {
 func TestCollectionController_Update_EmptyName(t *testing.T) {
 	controller := &controller.CollectionController{}
 	collection := domain.Collection{Name: ""}
-	bodyJSON, _ := json.Marshal(collection)
+	bodyJSON, _ := easyjson.Marshal(collection)
 	req := httptest.NewRequest(http.MethodPut, "/collection/{id}", strings.NewReader(string(bodyJSON)))
 	req = req.WithContext(context.WithValue(req.Context(), "x-user-id", "user-id"))
 	rr := httptest.NewRecorder()
@@ -135,7 +136,7 @@ func TestCollectionController_Update_NotFound(t *testing.T) {
 	controller := &controller.CollectionController{CollectionUseCase: mockCollUseCase}
 
 	collection := domain.Collection{Name: "Updated"}
-	bodyJSON, _ := json.Marshal(collection)
+	bodyJSON, _ := easyjson.Marshal(collection)
 	collID := "coll-id"
 	req := httptest.NewRequest(http.MethodPut, "/collections/{id}", bytes.NewReader(bodyJSON))
 	req = req.WithContext(context.WithValue(req.Context(), "x-user-id", "user-id"))
@@ -160,7 +161,7 @@ func TestCollectionController_Update_NotAuthor(t *testing.T) {
 		CollectionUseCase: mockCollUseCase,
 	}
 	collection := domain.Collection{Name: "NewName", Author: "other-author"}
-	bodyJSON, _ := json.Marshal(collection)
+	bodyJSON, _ := easyjson.Marshal(collection)
 	collID := "collID"
 
 	mockCollUseCase.On("GetByID", mock.Anything, collID).Return(collection, nil)
