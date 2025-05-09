@@ -28,6 +28,7 @@ func JwtAuthMiddleware(secret string) func(http.Handler) http.Handler {
 						return
 					}
 					ctx := context.WithValue(r.Context(), userIDKey, userID)
+					addPrometheusUser(userID)
 					next.ServeHTTP(w, r.WithContext(ctx))
 					return
 				}

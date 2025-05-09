@@ -1,8 +1,10 @@
 package middleware
 
 import (
+	mapset "github.com/deckarep/golang-set"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus"
@@ -13,6 +15,9 @@ type ResponseWriter struct {
 	http.ResponseWriter
 	statusCode int
 }
+
+var uniqueUsers mapset.Set
+var lastSync time.Time
 
 func NewResponseWriter(w http.ResponseWriter) *ResponseWriter {
 	return &ResponseWriter{w, http.StatusOK}
@@ -56,6 +61,13 @@ var TrainingsCount = prometheus.NewHistogram(
 	},
 )
 
+var UsersCount = prometheus.NewGauge(
+	prometheus.GaugeOpts{
+		Name: "unique_users_count",
+		Help: "The count of unique users in that day",
+	},
+)
+
 var responseStatus = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
 		Name: "response_status_total",
@@ -83,7 +95,25 @@ func PrometheusMiddleware(next http.Handler) http.Handler {
 		totalRequests.WithLabelValues(path).Inc()
 
 		timer.ObserveDuration()
+
+		checkUniqueUsers()
 	})
+}
+
+func addPrometheusUser(userID string) {
+	uniqueUsers.Add(userID)
+	UsersCount.Set(float64(uniqueUsers.Cardinality()))
+}
+
+func checkUniqueUsers() {
+	if uniqueUsers == nil {
+		uniqueUsers = mapset.NewSet()
+	}
+
+	if lastSync.Day() != time.Now().Day() {
+		uniqueUsers.Clear()
+	}
+	lastSync = time.Now()
 }
 
 //nolint:gochecknoinits // middleware
@@ -91,6 +121,7 @@ func init() {
 	prometheus.Register(FavouriteButtonClicks)
 	prometheus.Register(UserTime)
 	prometheus.Register(TrainingsCount)
+	prometheus.Register(UsersCount)
 	prometheus.Register(totalRequests)
 	prometheus.Register(responseStatus)
 	prometheus.Register(httpDuration)
