@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
@@ -18,7 +19,18 @@ type Collection interface {
 	InsertOne(context.Context, interface{}) (string, error)
 	DeleteOne(context.Context, interface{}) (int64, error)
 	UpdateOne(context.Context, interface{}, interface{}, ...options.Lister[options.UpdateOptions]) (UpdateResult, error)
-	ReplaceOne(context.Context, interface{}, interface{}, ...options.Lister[options.ReplaceOptions]) (UpdateResult, error)
+	UpdateMany(
+		context.Context,
+		interface{},
+		interface{},
+		...options.Lister[options.UpdateOptions],
+	) (UpdateResult, error)
+	ReplaceOne(
+		context.Context,
+		interface{},
+		interface{},
+		...options.Lister[options.ReplaceOptions],
+	) (UpdateResult, error)
 }
 
 type SingleResult interface {
@@ -31,8 +43,9 @@ type UpdateResult struct {
 }
 
 type FindOptions struct {
-	Limit int64
-	Skip  int64
+	Limit  int64
+	Skip   int64
+	SortBy string
 }
 
 type Cursor interface {
@@ -46,6 +59,13 @@ type Client interface {
 	Database(string) Database
 	Ping(context.Context) error
 	Disconnect(context.Context) error
+
+	StartSession() (Session, error)
+}
+
+type Session interface {
+	WithTransaction(ctx context.Context, fn func(ctx context.Context) (interface{}, error)) (interface{}, error)
+	EndSession(ctx context.Context)
 }
 
 type mongoClient struct {
@@ -58,12 +78,12 @@ type mongoCollection struct {
 	coll *mongo.Collection
 }
 
-type mongoSingleResult struct {
-	sr *mongo.SingleResult
+type mongoSession struct {
+	ss *mongo.Session
 }
 
-type mongoUpdateResult struct {
-	ur *mongo.UpdateResult
+type mongoSingleResult struct {
+	sr *mongo.SingleResult
 }
 
 func (mc *mongoClient) Ping(ctx context.Context) error {
@@ -90,13 +110,22 @@ func (mc *mongoCollection) FindOne(ctx context.Context, filter interface{}) Sing
 	return &mongoSingleResult{sr: singleResult}
 }
 
-func (mc *mongoCollection) Find(ctx context.Context, filter interface{}, opts ...options.Lister[options.FindOptions]) (Cursor, error) {
-	cursor, err := mc.coll.Find(ctx, filter, opts[:]...)
+func (mc *mongoCollection) Find(
+	ctx context.Context,
+	filter interface{},
+	opts ...options.Lister[options.FindOptions],
+) (Cursor, error) {
+	cursor, err := mc.coll.Find(ctx, filter, opts...)
 	return cursor, err
 }
 
-func (mc *mongoCollection) UpdateOne(ctx context.Context, filter interface{}, update interface{}, opts ...options.Lister[options.UpdateOptions]) (UpdateResult, error) {
-	res, err := mc.coll.UpdateOne(ctx, filter, update, opts[:]...)
+func (mc *mongoCollection) UpdateOne(
+	ctx context.Context,
+	filter interface{},
+	update interface{},
+	opts ...options.Lister[options.UpdateOptions],
+) (UpdateResult, error) {
+	res, err := mc.coll.UpdateOne(ctx, filter, update, opts...)
 	if err != nil {
 		return UpdateResult{}, err
 	}
@@ -108,8 +137,31 @@ func (mc *mongoCollection) UpdateOne(ctx context.Context, filter interface{}, up
 	return ur, nil
 }
 
-func (mc *mongoCollection) ReplaceOne(ctx context.Context, filter interface{}, update interface{}, opts ...options.Lister[options.ReplaceOptions]) (UpdateResult, error) {
-	res, err := mc.coll.ReplaceOne(ctx, filter, update, opts[:]...)
+func (mc *mongoCollection) UpdateMany(
+	ctx context.Context,
+	filter interface{},
+	update interface{},
+	opts ...options.Lister[options.UpdateOptions],
+) (UpdateResult, error) {
+	res, err := mc.coll.UpdateMany(ctx, filter, update, opts...)
+	if err != nil {
+		return UpdateResult{}, err
+	}
+
+	ur := UpdateResult{
+		MatchedCount:  res.MatchedCount,
+		ModifiedCount: res.ModifiedCount,
+	}
+	return ur, nil
+}
+
+func (mc *mongoCollection) ReplaceOne(
+	ctx context.Context,
+	filter interface{},
+	update interface{},
+	opts ...options.Lister[options.ReplaceOptions],
+) (UpdateResult, error) {
+	res, err := mc.coll.ReplaceOne(ctx, filter, update, opts...)
 	if err != nil {
 		return UpdateResult{}, err
 	}
@@ -141,6 +193,22 @@ func (sr *mongoSingleResult) Decode(v interface{}) error {
 
 func (mc *mongoClient) Disconnect(ctx context.Context) error {
 	return mc.cl.Disconnect(ctx)
+}
+
+func (mc *mongoClient) StartSession() (Session, error) {
+	session, err := mc.cl.StartSession()
+	return &mongoSession{ss: session}, err
+}
+
+func (ms *mongoSession) EndSession(ctx context.Context) {
+	ms.ss.EndSession(ctx)
+}
+
+func (ms *mongoSession) WithTransaction(
+	ctx context.Context,
+	fn func(ctx context.Context) (interface{}, error),
+) (interface{}, error) {
+	return ms.ss.WithTransaction(ctx, fn)
 }
 
 func NewClient(connection string) (Client, error) {

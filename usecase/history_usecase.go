@@ -2,22 +2,28 @@ package usecase
 
 import (
 	"context"
-	"go.mongodb.org/mongo-driver/v2/bson"
 	"main/domain"
 	"main/internal"
 	"time"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type historyUseCase struct {
 	userHistoryRepository       domain.UserHistoryRepository
 	collectionHistoryRepository domain.CollectionHistoryRepository
+	collectionRepository        domain.CollectionRepository
 	userRepository              domain.UserRepository
 	contextTimeout              time.Duration
 }
 
-func NewHistoryUseCase(userHistoryRepository domain.UserHistoryRepository, collectionHistoryRepository domain.CollectionHistoryRepository, userRepository domain.UserRepository, timeout time.Duration) domain.HistoryUseCase {
+func NewHistoryUseCase(
+	userHistoryRepository domain.UserHistoryRepository, collectionHistoryRepository domain.CollectionHistoryRepository,
+	collectionRepository domain.CollectionRepository, userRepository domain.UserRepository, timeout time.Duration,
+) domain.HistoryUseCase {
 	return &historyUseCase{
 		userHistoryRepository:       userHistoryRepository,
+		collectionRepository:        collectionRepository,
 		collectionHistoryRepository: collectionHistoryRepository,
 		userRepository:              userRepository,
 		contextTimeout:              timeout,
@@ -41,11 +47,11 @@ func (hu *historyUseCase) AddTraining(c context.Context, userID string, historyI
 	newStatistics := internal.CalcStatistics(userHistory)
 
 	update := bson.D{
-		{"$set", bson.D{
-			{"statistics", newStatistics},
+		{Key: "$set", Value: bson.D{
+			{Key: "statistics", Value: newStatistics},
 		}},
 	}
-	err = hu.userRepository.UpdateByID(ctx, userID, update)
+	_, err = hu.userRepository.UpdateByID(ctx, userID, update)
 	if err != nil {
 		return err
 	}
@@ -58,10 +64,22 @@ func (hu *historyUseCase) AddTraining(c context.Context, userID string, historyI
 		AllCardsCount:  historyItem.AllCardsCount,
 	}
 
+	update = bson.D{
+		{Key: "$inc", Value: bson.D{{Key: "trainings", Value: 1}}},
+	}
+	_, err = hu.collectionRepository.UpdateByID(ctx, historyItem.CollectionID, update)
+	if err != nil {
+		return err
+	}
+
 	return hu.collectionHistoryRepository.UpdateByID(ctx, historyItem.CollectionID, smallHistoryItem)
 }
 
-func (hu *historyUseCase) GetUserHistoryFromTime(c context.Context, userID string, fromTime int) ([]domain.HistoryItem, error) {
+func (hu *historyUseCase) GetUserHistoryFromTime(
+	c context.Context,
+	userID string,
+	fromTime int,
+) ([]domain.HistoryItem, error) {
 	ctx, cancel := context.WithTimeout(c, hu.contextTimeout)
 	defer cancel()
 

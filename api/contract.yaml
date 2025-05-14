@@ -83,6 +83,35 @@ paths:
                     message:
                       type: string
                       example: "*custom error*"
+        security:
+            - bearerAuth: []
+  /global/addMetrics:
+    post:
+      tags:
+        - global
+      summary: Добавление метрик
+      operationId: addMetrics
+      requestBody:
+        description: JSON-объект (описание приведено во вкладке Schema)
+        content:
+          application/json:
+            schema:
+                $ref: '#/components/schemas/Metrics'
+      responses:
+        '200':
+          description: Метрики успешно добавлены
+        '400':
+          description: Недопустимые значения метрик
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Invalid data
+      security:
+        - bearerAuth: []
   /public/signup:
     post:
       tags:
@@ -257,7 +286,7 @@ paths:
       tags:
         - card
       summary: Создание карточки и ее добавление в колоду
-      description: Доступно только создателю колоды
+      description: Доступно только создателю колоды. Чтобы изменить поле attachment используются другие эндпоинты
       operationId: addCard
       parameters:
         - name: id
@@ -278,6 +307,17 @@ paths:
                   answer:
                     type: string
                     example: im ok
+                  other_answers:
+                    type: object
+                    properties:
+                      count: 
+                        type: integer
+                        example: 1
+                      items:
+                        type: array
+                        items: 
+                          type: string
+                        example: ["no ok"]
         
       responses:
         '201':
@@ -290,12 +330,26 @@ paths:
                   local_id:
                     type: integer
                     example: 0
-                  question: 
+                  question:
                     type: string
                     example: how are you?
                   answer:
                     type: string
                     example: im ok
+                  attachment:
+                    type: string
+                    example: ""
+                  other_answers:
+                    type: object
+                    properties:
+                      count: 
+                        type: integer
+                        example: 1
+                      items:
+                        type: array
+                        items: 
+                          type: string
+                        example: ["no ok"]
         '404':
           description: колоды не существует
           content:
@@ -333,7 +387,7 @@ paths:
       tags:
         - card
       summary: Изменение существующей карточки
-      description: Доступно только создателю колоды
+      description: Доступно только создателю колоды. Необходимо передавать все поля, кроме attachment - чтобы изменить поле attachment используются другие эндпоинты
       operationId: UpdateCard
       parameters:
         - name: id
@@ -347,7 +401,6 @@ paths:
           schema:
             type: integer
       requestBody:
-        description: вопрос и ответ
         content:
           application/json:
             schema:
@@ -355,10 +408,21 @@ paths:
                 properties:
                   question:
                     type: string
-                    example: kak porabotal?
+                    example: how are you?
                   answer:
                     type: string
-                    example: normik
+                    example: im ok
+                  other_answers:
+                    type: object
+                    properties:
+                      count: 
+                        type: integer
+                        example: 1
+                      items:
+                        type: array
+                        items: 
+                          type: string
+                        example: ["no ok"]
       responses:
         '200':
           description: успешная операция
@@ -406,7 +470,7 @@ paths:
         tags:
           - card
         summary: Удаление карточки из колоды
-        description: Доступно только создателю колоды
+        description: Доступно только создателю колоды. Если прикреплен attachment, он удаляется автоматически
         operationId: deleteCard
         parameters:
           - name: id
@@ -462,6 +526,201 @@ paths:
                       example: You are not the owner of this collection
         security:
           - bearerAuth: []
+  /collection/{id}/card/{cardID}/picture:
+    get:
+      tags:
+        - card
+      summary: Получение картинки карточки по object_name
+      description: Доступно только создателю колоды / всем, если колода публичная
+      operationId: GetCardPicture
+      parameters:
+        - name: id
+          in: path
+          required: true 
+          schema:
+            type: string
+        - name: cardID
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: object_name
+          in: query
+          required: true
+          schema:
+            type: string
+            example: 184911a8-6b72-4ca8-aa30-17e2c5e27239
+      responses:
+        '200':
+          description: успешная операция
+          content:
+            image/jpeg:
+              schema:
+                example: бинарные данные
+
+        '404':
+          description: колоды не существует / нет доступа к картинке (напр. была удалена)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: There is no collection with this ID
+        '401':
+          description: токен недействителен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Not authorized
+        '403':
+            description: нет доступа к колоде
+            content:
+              apllication/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Access denied
+      security:
+        - bearerAuth: []
+    put:
+      tags:
+        - card
+      summary: Загрузка картинки в колоду
+      description: Доступно только создателю колоды. Поле attachment карточки обновляется на новый объект автоматически
+      operationId: UploadCardPicture
+      parameters:
+        - name: id
+          in: path
+          required: true 
+          schema:
+            type: string
+        - name: cardID
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: успешная операция
+          content:
+            image/jpeg:
+              schema:
+                $ref: "#/components/schemas/PictureUploaded"
+        '404':
+          description: колоды не существует
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: There is no collection with this ID
+        '401':
+          description: токен недействителен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Not authorized
+        '403':
+            description: нет доступа к колоде
+            content:
+              apllication/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Access denied
+      security:
+        - bearerAuth: []
+    delete:
+      tags:
+        - card
+      summary: Удаление картинки для карточки
+      description: Доступно только создателю колоды. Поле attachment карточки обновляется на пустое автоматически
+      operationId: DeleteCardPicture
+      parameters:
+        - name: id
+          in: path
+          required: true 
+          schema:
+            type: string
+        - name: cardID
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: object_name
+          in: query
+          required: true
+          schema:
+            type: string
+            example: 184911a8-6b72-4ca8-aa30-17e2c5e27239
+      responses:
+        '200':
+          description: успешная операция
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Card picture deleted
+        '404':
+          description: колоды не существует
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Card picture not exists
+        '401':
+          description: токен недействителен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Not authorized
+        '403':
+            description: нет доступа к колоде
+            content:
+              apllication/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Access denied
+      security:
+        - bearerAuth: []
   /user:
     get:
       tags:
@@ -687,13 +946,13 @@ paths:
       tags:
         - user
       summary: Получение истории тренировок текущего пользователя
-      description: Доступно только авторизованным пользователям
+      description: Доступно только авторизованным пользователям. Нет гарантии, что указанный attachment в ошибках достижим. Если поле attachment = пустая строка, вложения нет
       operationId: getUserHistory
       parameters:
         - name: from_time
           in: query
-          required: true 
-          description: начальная точка времени, с которого возвращать историю (UTC Timestamp)
+          required: false
+          description: начальная точка времени, с которого возвращать историю (UTC Timestamp); если не задан, возвращается вся история
           schema:
             type: integer
             example: 123123123
@@ -793,7 +1052,7 @@ paths:
       security:
         - bearerAuth: []
   /collection/search:
-    post:
+    get:
       tags:
         - collection
       summary: Поиск публичных колод
@@ -806,6 +1065,20 @@ paths:
             schema:
               type: string
               example: математика 5 класс
+          - name: sort_by
+            in: query
+            required: false
+            description: если параметр не задан, возвращаются отсортированные по лайкам
+            schema:
+              type: string
+              example: likes или trainings
+          - name: category
+            in: query
+            required: false
+            description: пока есть возможность получить только избранные колоды
+            schema:
+              type: string
+              example: favourite
           - name: count
             in: query
             required: true
@@ -899,6 +1172,122 @@ paths:
                       type: string
                       example: Not authorized
         
+      security:
+        - bearerAuth: []
+  /collection/{id}/like:
+    put:
+      tags:
+        - collection
+      summary: Поставить лайк колоде
+      description: Возможность поставить лайк если колода публичная или ты ее владелец. Возвращает текущее количество лайков
+      operationId: AddLike
+      parameters:
+        - name: id
+          description: ID колоды
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: успешная операция
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  likes:
+                    type: integer
+                    description: Текущее количество лайков
+                    example: 42
+        '404':
+          description: колоды не существует
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: There is no collection with this ID
+        '401':
+          description: токен недействителен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Not authorized
+        '403':
+            description: нет доступа к колоде
+            content:
+              apllication/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Collection is not public
+      security:
+        - bearerAuth: []
+  /collection/{id}/unlike:
+    put:
+      tags:
+        - collection
+      summary: Убрать лайк с колоды
+      description: Возможность снять лайк. Возвращает текущее количество лайков
+      operationId: RemoveLike
+      parameters:
+        - name: id
+          description: ID колоды
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: успешная операция
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  likes:
+                    type: integer
+                    description: Текущее количество лайков
+                    example: 42
+        '404':
+          description: колоды не существует
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: There is no collection with this ID
+        '401':
+          description: токен недействителен
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Not authorized
+        '403':
+            description: нет доступа к колоде
+            content:
+              apllication/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                      example: Collection is not public
       security:
         - bearerAuth: []
   /collection/{id}:
@@ -1026,7 +1415,7 @@ paths:
       tags:
         - collection
       summary: Удаление колоды
-      description: Доступно только создателю
+      description: Доступно только создателю. Вложения в карточки удаляются автоматически
       operationId: deleteCollection
       parameters:
         - name: id
@@ -1094,6 +1483,20 @@ components:
         answer:
           type: string
           example: Cox-Zucker
+        attachment:
+          type: string
+          example: 184911a8-6b72-4ca8-aa30-17e2c5e27239_4_1743853284
+        other_answers:
+          type: object
+          properties:
+            count:
+              type: integer
+              example: 1
+            items:
+              type: array
+              items:
+                type: string
+              example: ["неправильный ответ"]
     HistoryItem:
       type: object
       properties:
@@ -1149,6 +1552,9 @@ components:
         blank_answer:
           type: string
           example: blank answer
+        attachment:
+          type: string
+          example: fjsdkfjklsdfjsdklf
     RightItem:
       type: object
       properties:
@@ -1183,13 +1589,29 @@ components:
             {
               "local_id": 1,
               "question": "What is ur name?",
-              "answer": "Cox-Zucker"
+              "answer": "Cox-Zucker",
+              "attachment": "",
+              "other_answers":{
+                "count": 0,
+                "items": []
+              }
             }, {
               "local_id": 2,
               "question": "whatsup",
-              "answer": "ok"
+              "answer": "ok",
+              "attachment": "fdafhsdjf_3123_123131",
+              "other_answers":{
+                "count": 1,
+                "items": ["no ok"]
+              }
             }
             ]
+        likes:
+          type: integer
+          example: 52
+        trainings:
+          type: integer
+          example: 527
     CollectionPreview:
       type: object
       description: для получения карт колоды вызвать GET с id
@@ -1206,6 +1628,12 @@ components:
         cards_count:
           type: integer
           example: 32
+        likes:
+          type: integer
+          example: 52
+        trainings:
+          type: integer
+          example: 527
     UserInfo:
       type: object
       properties:
@@ -1239,6 +1667,15 @@ components:
             medium_percentage:
               type: integer
               example: 99
+        favourite:
+          type: array
+          items:
+            type: string
+          example: [
+        "ceb80d45-81ae-47b7-bfaf-c396bcd773fe",
+        "acac1c7d-444f-4a88-ba90-a535aa73bc4c",
+        "bd134d4a-f6f0-4df6-8f34-0340766eb5cb"
+        ]
     PublicUserInfo:
       type: object
       properties:
@@ -1269,6 +1706,36 @@ components:
             medium_percentage:
               type: integer
               example: 99
+    Metrics:
+      type: object
+      description: Все метрики должны обнуляться после отправки на сервер
+      properties:
+        favourite_filter_button:
+          type: integer
+          description: количество кликов по кнопке фильтра "Избранное"
+          example: 5
+        favourite_profile_button:
+          type: integer
+          description: количество кликов по кнопке "Открыть избранные колоды"
+          example: 2
+        last_in_app_time:
+          type: integer
+          description: суммарное время, проведенное в приложении, в последний раз (от захода до выхода, в секундах)
+          example: 5321
+        sum_trainings_time:
+          type: integer
+          description: суммарное время, проведенное в тренировках (от захода до выхода, в секундах)
+          example: 134
+        trainings_count:
+          type: integer
+          description: количество тренировок за последний запуск приложения
+          example: 1
+    PictureUploaded:
+      type: object
+      properties:
+        object_name: 
+          type: string
+          example: 184911a8-6b72-4ca8-aa30-17e2c5e27239
   requestBodies:
     CardWithoutID:
       content:
@@ -1332,6 +1799,7 @@ components:
                   type: array
                   items:
                     $ref: '#/components/schemas/RightItem'
+    
   securitySchemes:
     bearerAuth:
       type: http

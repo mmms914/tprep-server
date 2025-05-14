@@ -2,22 +2,24 @@ package bootstrap
 
 import (
 	"context"
-	"github.com/gookit/slog"
 	"main/domain"
 	"main/storage"
+	"os"
 	"time"
+
+	"github.com/gookit/slog"
 )
 
 func NewStorage(env *Env) storage.Client {
+	//nolint:mnd // 10 sec
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	var endpoint string
 
-	if env.AppEnv == "local" {
-		endpoint = env.LocalMinioURI
-	} else if env.AppEnv == "docker" {
-		endpoint = env.DockerMinioURI
+	endpoint, exists := os.LookupEnv("MINIO_URI")
+	if !exists {
+		slog.Fatal("Cannot find MINIO_URI system variable")
 	}
 
 	accessKeyID := env.MinioRootUser
@@ -44,6 +46,18 @@ func NewStorage(env *Env) storage.Client {
 			slog.Fatal("Can't create bucket:", err)
 		}
 		slog.Infof("Created bucket %q\n", domain.UserBucket)
+	}
+
+	found, err = minioClient.BucketExists(ctx, domain.CollectionBucket)
+	if err != nil {
+		slog.Fatal(err)
+	}
+	if !found {
+		err = minioClient.MakeBucket(ctx, domain.CollectionBucket)
+		if err != nil {
+			slog.Fatal("Can't create bucket:", err)
+		}
+		slog.Infof("Created bucket %q\n", domain.CollectionBucket)
 	}
 	slog.Println("Connected to Minio")
 	return minioClient

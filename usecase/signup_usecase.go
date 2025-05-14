@@ -24,6 +24,7 @@ func (su *signupUseCase) Create(c context.Context, user *domain.User) (string, e
 	defer cancel()
 
 	user.Collections = make([]string, 0)
+	user.Favourite = make([]string, 0)
 	return su.userRepository.Create(ctx, user)
 }
 
@@ -33,10 +34,12 @@ func (su *signupUseCase) GetUserByEmail(c context.Context, email string) (domain
 	return su.userRepository.GetByEmail(ctx, email)
 }
 
-func (su *signupUseCase) CreateAccessToken(user *domain.User, secret string, expiry int) (accessToken string, exp time.Time, err error) {
-	return internal.CreateAccessToken(user, secret, expiry)
+func (su *signupUseCase) CreateAccessToken(user *domain.User, secret string, expiry int) (string, time.Time, error) {
+	accessToken, exp, err := internal.CreateAccessToken(user, secret, expiry)
+	return accessToken, exp, err
 }
 
-func (su *signupUseCase) CreateRefreshToken(user *domain.User, secret string, expiry int) (refreshToken string, exp time.Time, err error) {
-	return internal.CreateRefreshToken(user, secret, expiry)
+func (su *signupUseCase) CreateRefreshToken(user *domain.User, secret string, expiry int) (string, time.Time, error) {
+	refreshToken, exp, err := internal.CreateRefreshToken(user, secret, expiry)
+	return refreshToken, exp, err
 }

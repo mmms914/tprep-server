@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"main/api/middleware"
 	"main/bootstrap"
 	"main/domain"
 	"net/http"
@@ -33,7 +34,11 @@ func (gc *GlobalController) GetTrainingPlan(w http.ResponseWriter, r *http.Reque
 	}
 
 	if endDate-startDate < 24*3600 {
-		http.Error(w, jsonError("difference between the beginning and the end should be at least a day"), http.StatusBadRequest)
+		http.Error(
+			w,
+			jsonError("difference between the beginning and the end should be at least a day"),
+			http.StatusBadRequest,
+		)
 		return
 	}
 
@@ -46,4 +51,39 @@ func (gc *GlobalController) GetTrainingPlan(w http.ResponseWriter, r *http.Reque
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(planResponse)
+}
+
+func (gc *GlobalController) AddMetrics(w http.ResponseWriter, r *http.Request) {
+	var req domain.MetricsRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		http.Error(w, jsonError("Invalid data"), http.StatusBadRequest)
+		return
+	}
+	if req.FilterClicks < 0 || req.ProfileClicks < 0 || req.LastInAppTime < 0 || req.SumTrainingsTime < 0 ||
+		req.TrainingsCount < 0 {
+		http.Error(w, jsonError("Metrics cannot be negative"), http.StatusBadRequest)
+		return
+	}
+
+	if req.SumTrainingsTime > 0 && req.TrainingsCount == 0 {
+		http.Error(w, jsonError("invalid trainings (count or time)"), http.StatusBadRequest)
+		return
+	}
+
+	if req.SumTrainingsTime > req.LastInAppTime {
+		http.Error(w, jsonError("in app time cannot be lower than training time"), http.StatusBadRequest)
+		return
+	}
+
+	middleware.FavouriteButtonClicks.WithLabelValues("filter_favourite_button").Add(float64(req.FilterClicks))
+	middleware.FavouriteButtonClicks.WithLabelValues("profile_favourite_button").Add(float64(req.ProfileClicks))
+
+	middleware.UserTime.WithLabelValues("user_time_in_app").Observe(float64(req.LastInAppTime))
+	middleware.UserTime.WithLabelValues("user_time_in_trainings").Observe(float64(req.SumTrainingsTime))
+
+	middleware.TrainingsCount.Observe(float64(req.TrainingsCount))
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 }

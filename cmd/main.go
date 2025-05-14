@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/go-chi/chi/v5"
-	"github.com/gookit/slog"
 	"main/api/route"
 	"main/bootstrap"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/gookit/slog"
 )
 
 func main() {

@@ -1,14 +1,15 @@
 package route
 
 import (
-	"github.com/go-chi/chi/v5"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"main/api/middleware"
 	"main/bootstrap"
 	"main/database"
 	"main/storage"
 	"net/http"
 	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func Setup(env *bootstrap.Env, timeout time.Duration, db database.Database, s storage.Client, r *chi.Mux) {
@@ -28,8 +29,8 @@ func Setup(env *bootstrap.Env, timeout time.Duration, db database.Database, s st
 	// private methods
 	r.Group(func(r chi.Router) {
 		r.Use(middleware.JwtAuthMiddleware(env.AccessTokenSecret))
-		NewCollectionRouter(env, timeout, db, s, r)
-		NewUserRouter(env, timeout, db, s, r)
+		NewCollectionRouter(timeout, db, s, r)
+		NewUserRouter(timeout, db, s, r)
 		NewGlobalRouter(env, timeout, r)
 	})
 }

@@ -2,10 +2,11 @@ package usecase
 
 import (
 	"context"
-	"go.mongodb.org/mongo-driver/v2/bson"
 	"io"
 	"main/domain"
 	"time"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type userUseCase struct {
@@ -14,7 +15,9 @@ type userUseCase struct {
 	contextTimeout time.Duration
 }
 
-func NewUserUseCase(userRepository domain.UserRepository, userStorage domain.UserStorage, timeout time.Duration) domain.UserUseCase {
+func NewUserUseCase(
+	userRepository domain.UserRepository, userStorage domain.UserStorage, timeout time.Duration,
+) domain.UserUseCase {
 	return &userUseCase{
 		userRepository: userRepository,
 		userStorage:    userStorage,
@@ -27,12 +30,13 @@ func (uu *userUseCase) PutByID(c context.Context, userID string, user *domain.Us
 	defer cancel()
 
 	update := bson.D{
-		{"$set", bson.D{
-			{"username", user.Username},
-			{"email", user.Email},
+		{Key: "$set", Value: bson.D{
+			{Key: "username", Value: user.Username},
+			{Key: "email", Value: user.Email},
 		}},
 	}
-	return uu.userRepository.UpdateByID(ctx, userID, update)
+	_, err := uu.userRepository.UpdateByID(ctx, userID, update)
+	return err
 }
 
 func (uu *userUseCase) DeleteByID(c context.Context, userID string) error {
@@ -47,30 +51,6 @@ func (uu *userUseCase) GetByID(c context.Context, userID string) (domain.User, e
 	return uu.userRepository.GetByID(ctx, userID)
 }
 
-func (uu *userUseCase) AddCollection(c context.Context, userID string, collectionID string) error {
-	ctx, cancel := context.WithTimeout(c, uu.contextTimeout)
-	defer cancel()
-
-	update := bson.D{
-		{"$push", bson.D{
-			{"collections", collectionID},
-		}},
-	}
-	return uu.userRepository.UpdateByID(ctx, userID, update)
-}
-
-func (uu *userUseCase) DeleteCollection(c context.Context, userID string, collectionID string) error {
-	ctx, cancel := context.WithTimeout(c, uu.contextTimeout)
-	defer cancel()
-
-	update := bson.D{
-		{"$pull", bson.D{
-			{"collections", collectionID},
-		}},
-	}
-	return uu.userRepository.UpdateByID(ctx, userID, update)
-}
-
 func (uu *userUseCase) GetProfilePicture(c context.Context, userID string) ([]byte, error) {
 	ctx, cancel := context.WithTimeout(c, uu.contextTimeout)
 	defer cancel()
@@ -83,12 +63,12 @@ func (uu *userUseCase) UploadProfilePicture(c context.Context, userID string, pi
 	defer cancel()
 
 	update := bson.D{
-		{"$set", bson.D{
-			{"has_picture", true},
+		{Key: "$set", Value: bson.D{
+			{Key: "has_picture", Value: true},
 		}},
 	}
 
-	err := uu.userRepository.UpdateByID(ctx, userID, update)
+	_, err := uu.userRepository.UpdateByID(ctx, userID, update)
 	if err != nil {
 		return err
 	}
@@ -101,12 +81,12 @@ func (uu *userUseCase) RemoveProfilePicture(c context.Context, userID string) er
 	defer cancel()
 
 	update := bson.D{
-		{"$set", bson.D{
-			{"has_picture", false},
+		{Key: "$set", Value: bson.D{
+			{Key: "has_picture", Value: false},
 		}},
 	}
 
-	err := uu.userRepository.UpdateByID(ctx, userID, update)
+	_, err := uu.userRepository.UpdateByID(ctx, userID, update)
 	if err != nil {
 		return err
 	}

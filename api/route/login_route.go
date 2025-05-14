@@ -1,7 +1,6 @@
 package route
 
 import (
-	"github.com/go-chi/chi/v5"
 	"main/api/controller"
 	"main/bootstrap"
 	"main/database"
@@ -9,6 +8,8 @@ import (
 	"main/repository"
 	"main/usecase"
 	"time"
+
+	"github.com/go-chi/chi/v5"
 )
 
 func NewLoginRouter(env *bootstrap.Env, timeout time.Duration, db database.Database, r chi.Router) {

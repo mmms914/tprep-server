@@ -2,11 +2,12 @@ package repository
 
 import (
 	"context"
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"main/database"
 	"main/domain"
 	"main/internal"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 type collectionRepository struct {
@@ -28,12 +29,20 @@ func (cr *collectionRepository) Create(c context.Context, collection *domain.Col
 	return id, err
 }
 
-func (cr *collectionRepository) UpdateByID(c context.Context, collectionID string, update interface{}) (database.UpdateResult, error) {
+func (cr *collectionRepository) UpdateByID(
+	c context.Context,
+	collectionID string,
+	update interface{},
+) (database.UpdateResult, error) {
 	filter := bson.D{{Key: "_id", Value: collectionID}}
 	return cr.Update(c, filter, update)
 }
 
-func (cr *collectionRepository) Update(c context.Context, filter interface{}, update interface{}) (database.UpdateResult, error) {
+func (cr *collectionRepository) Update(
+	c context.Context,
+	filter interface{},
+	update interface{},
+) (database.UpdateResult, error) {
 	collections := cr.database.Collection(cr.collection)
 	return collections.UpdateOne(c, filter, update)
 }
@@ -41,25 +50,51 @@ func (cr *collectionRepository) Update(c context.Context, filter interface{}, up
 func (cr *collectionRepository) DeleteByID(c context.Context, collectionID string) error {
 	collections := cr.database.Collection(cr.collection)
 	filter := bson.D{{Key: "_id", Value: collectionID}}
-	_, err := collections.DeleteOne(c, filter)
+	update := bson.D{{Key: "$set", Value: bson.D{{Key: "is_deleted", Value: true}}}}
+	_, err := collections.UpdateOne(c, filter, update)
 	return err
 }
 
 func (cr *collectionRepository) GetByID(c context.Context, collectionID string) (domain.Collection, error) {
 	var result domain.Collection
 	collections := cr.database.Collection(cr.collection)
-	filter := bson.D{{Key: "_id", Value: collectionID}}
+	filter := bson.D{
+		{Key: "_id", Value: collectionID},
+		{Key: "is_deleted", Value: bson.D{
+			{Key: "$exists", Value: false},
+		}},
+	}
 	err := collections.FindOne(c, filter).Decode(&result)
 	return result, err
 }
 
-func (cr *collectionRepository) GetByFilter(c context.Context, filter interface{}, opts database.FindOptions) ([]domain.Collection, error) {
+func (cr *collectionRepository) GetByFilter(
+	c context.Context,
+	filter interface{},
+	opts database.FindOptions,
+) ([]domain.Collection, error) {
 	var results []domain.Collection
 	collections := cr.database.Collection(cr.collection)
 
-	op := options.Find().SetLimit(opts.Limit).SetSkip(opts.Skip)
+	notDeletedFilter := bson.D{
+		{Key: "$and", Value: []interface{}{
+			filter,
+			bson.D{{Key: "is_deleted", Value: bson.D{{Key: "$exists", Value: false}}}},
+		}},
+	}
 
-	cursor, err := collections.Find(c, filter, op)
+	op := options.Find()
+	if opts.SortBy != "" {
+		sortFilter := bson.D{
+			{Key: opts.SortBy, Value: -1},
+			{Key: "name_lower", Value: 1},
+			{Key: "_id", Value: 1},
+		}
+		op = op.SetSort(sortFilter)
+	}
+	op = op.SetLimit(opts.Limit).SetSkip(opts.Skip)
+
+	cursor, err := collections.Find(c, notDeletedFilter, op)
 	if err != nil {
 		return nil, err
 	}

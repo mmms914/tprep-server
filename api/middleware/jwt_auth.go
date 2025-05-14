@@ -7,6 +7,11 @@ import (
 	"strings"
 )
 
+const (
+	userIDKey string = "x-user-id"
+)
+
+//nolint:mnd // business logic
 func JwtAuthMiddleware(secret string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -16,12 +21,14 @@ func JwtAuthMiddleware(secret string) func(http.Handler) http.Handler {
 				authToken := t[1]
 				authorized, err := internal.IsAuthorized(authToken, secret)
 				if authorized {
-					userID, err := internal.ExtractIDFromToken(authToken, secret)
+					var userID string
+					userID, err = internal.ExtractIDFromToken(authToken, secret)
 					if err != nil {
 						http.Error(w, jsonError(err.Error()), http.StatusUnauthorized)
 						return
 					}
-					ctx := context.WithValue(r.Context(), "x-user-id", userID)
+					ctx := context.WithValue(r.Context(), userIDKey, userID)
+					addPrometheusUser(userID)
 					next.ServeHTTP(w, r.WithContext(ctx))
 					return
 				}

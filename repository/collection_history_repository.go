@@ -3,10 +3,11 @@ package repository
 import (
 	"context"
 	"errors"
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo"
 	"main/database"
 	"main/domain"
+
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
 type collectionHistoryRepository struct {
@@ -29,7 +30,7 @@ func (chr *collectionHistoryRepository) CreateIfNotExists(c context.Context, col
 
 	if err := collection.FindOne(c, filter).Decode(&collectionHistory); err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			collectionHistory := domain.CollectionHistory{
+			collectionHistory = domain.CollectionHistory{
 				CollectionID: collectionID,
 				Items:        make([]domain.SmallHistoryItem, 0),
 			}
@@ -41,7 +42,11 @@ func (chr *collectionHistoryRepository) CreateIfNotExists(c context.Context, col
 	return nil
 }
 
-func (chr *collectionHistoryRepository) UpdateByID(c context.Context, collectionID string, item domain.SmallHistoryItem) error {
+func (chr *collectionHistoryRepository) UpdateByID(
+	c context.Context,
+	collectionID string,
+	item domain.SmallHistoryItem,
+) error {
 	err := chr.CreateIfNotExists(c, collectionID)
 	if err != nil {
 		return err
@@ -50,8 +55,8 @@ func (chr *collectionHistoryRepository) UpdateByID(c context.Context, collection
 	collection := chr.database.Collection(chr.collection)
 	filter := bson.D{{Key: "_id", Value: collectionID}}
 	update := bson.D{
-		{"$push", bson.D{
-			{"items", item},
+		{Key: "$push", Value: bson.D{
+			{Key: "items", Value: item},
 		}},
 	}
 	_, err = collection.UpdateOne(c, filter, update)
@@ -59,7 +64,10 @@ func (chr *collectionHistoryRepository) UpdateByID(c context.Context, collection
 	return err
 }
 
-func (chr *collectionHistoryRepository) GetByID(c context.Context, collectionID string) (domain.CollectionHistory, error) {
+func (chr *collectionHistoryRepository) GetByID(
+	c context.Context,
+	collectionID string,
+) (domain.CollectionHistory, error) {
 	collection := chr.database.Collection(chr.collection)
 	filter := bson.D{{Key: "collection_id", Value: collectionID}}
 

@@ -2,9 +2,10 @@ package storage
 
 import (
 	"context"
+	"io"
+
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"io"
 )
 
 type Client interface {
@@ -25,6 +26,8 @@ type Options struct {
 	UseSSL          bool
 }
 
+const jpegForm = ".jpeg"
+
 func New(endpoint string, options Options) (Client, error) {
 	opts := &minio.Options{
 		Creds:  credentials.NewStaticV4(options.AccessKeyID, options.SecretAccessKey, ""),
@@ -35,6 +38,7 @@ func New(endpoint string, options Options) (Client, error) {
 }
 
 func (sc *storageClient) GetObject(ctx context.Context, bucketName string, objectName string) ([]byte, error) {
+	objectName += jpegForm
 	obj, err := sc.cl.GetObject(ctx, bucketName, objectName, minio.GetObjectOptions{})
 	if err != nil {
 		return nil, err
@@ -43,12 +47,20 @@ func (sc *storageClient) GetObject(ctx context.Context, bucketName string, objec
 	return fileBytes, err
 }
 
-func (sc *storageClient) PutObject(ctx context.Context, bucketName string, objectName string, reader io.Reader, objectSize int64) error {
+func (sc *storageClient) PutObject(
+	ctx context.Context,
+	bucketName string,
+	objectName string,
+	reader io.Reader,
+	objectSize int64,
+) error {
+	objectName += jpegForm
 	_, err := sc.cl.PutObject(ctx, bucketName, objectName, reader, objectSize, minio.PutObjectOptions{})
 	return err
 }
 
 func (sc *storageClient) RemoveObject(ctx context.Context, bucketName string, objectName string) error {
+	objectName += jpegForm
 	return sc.cl.RemoveObject(ctx, bucketName, objectName, minio.RemoveObjectOptions{})
 }
 

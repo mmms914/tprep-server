@@ -7,6 +7,7 @@ import (
 func CalcStatistics(items []domain.HistoryItem) domain.UserStatistics {
 	count := 0
 	sumPercentage := 0.0
+	//nolint:mnd // percent conversion
 	for _, item := range items {
 		count++
 		if item.AllCardsCount != 0 {
